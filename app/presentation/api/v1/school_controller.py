@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.school_repository import SchoolRepository
+from app.infrastructure.repositories.student_repository import StudentRepository
 from app.application.services.school_service import SchoolService
 from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
@@ -13,7 +14,8 @@ router = APIRouter(prefix="/schools", tags=["schools"])
 def get_school_service(session: Session = Depends(get_session)) -> SchoolService:
     """Dependency to get school service"""
     school_repository = SchoolRepository(session)
-    return SchoolService(school_repository)
+    student_repository = StudentRepository(session)
+    return SchoolService(school_repository, student_repository)
 
 
 @router.get("/", response_model=PaginatedResponse[SchoolResponseDTO])

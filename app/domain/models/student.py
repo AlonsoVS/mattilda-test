@@ -15,8 +15,6 @@ class Student:
     school_id: int
     enrollment_date: date
     address: str
-    guardian_name: str
-    guardian_phone: str
     is_active: bool = True
     id: Optional[int] = None
     created_at: Optional[datetime] = None
@@ -81,8 +79,6 @@ class Student:
             'school_id': self.school_id,
             'enrollment_date': self.enrollment_date,
             'address': self.address,
-            'guardian_name': self.guardian_name,
-            'guardian_phone': self.guardian_phone,
             'is_active': self.is_active,
             'created_at': self.created_at,
             'updated_at': datetime.now()

@@ -18,8 +18,6 @@ class StudentBase(SQLModel):
     school_id: int = Field(foreign_key="schools.id")
     enrollment_date: date
     address: str
-    guardian_name: str
-    guardian_phone: str
     is_active: bool = True
 
 

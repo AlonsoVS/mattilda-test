@@ -45,3 +45,8 @@ class StudentRepositoryInterface(ABC):
     async def search_by_name(self, name: str, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
         """Search students by name with pagination"""
         pass
+
+    @abstractmethod
+    async def count_by_school_id(self, school_id: int) -> int:
+        """Count students by school ID"""
+        pass

@@ -13,7 +13,6 @@ class SchoolCreateDTO(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     principal: Optional[str] = None
-    student_count: Optional[int] = None
     is_active: bool = True
 
 
@@ -27,7 +26,6 @@ class SchoolUpdateDTO(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     principal: Optional[str] = None
-    student_count: Optional[int] = None
     is_active: Optional[bool] = None
 
 

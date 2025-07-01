@@ -88,8 +88,6 @@ def seed_data():
                 "school_id": 1,
                 "enrollment_date": date(2023, 8, 15),
                 "address": "456 School Street",
-                "guardian_name": "Mary Johnson",
-                "guardian_phone": "(217) 555-1000",
                 "is_active": True
             },
             {
@@ -102,8 +100,6 @@ def seed_data():
                 "school_id": 2,
                 "enrollment_date": date(2022, 8, 20),
                 "address": "789 Student Avenue",
-                "guardian_name": "David Chen",
-                "guardian_phone": "(608) 555-2000",
                 "is_active": True
             }
         ]

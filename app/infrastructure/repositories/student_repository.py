@@ -117,3 +117,8 @@ class StudentRepository(StudentRepositoryInterface):
         # Convert to domain models
         students = [StudentMapper.to_domain(entity) for entity in entities]
         return students, total
+
+    async def count_by_school_id(self, school_id: int) -> int:
+        """Count students by school ID"""
+        count_statement = select(func.count()).select_from(StudentEntity).where(StudentEntity.school_id == school_id)
+        return self.session.exec(count_statement).one()

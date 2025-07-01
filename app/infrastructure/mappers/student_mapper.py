@@ -19,8 +19,6 @@ class StudentMapper:
             school_id=entity.school_id,
             enrollment_date=entity.enrollment_date,
             address=entity.address,
-            guardian_name=entity.guardian_name,
-            guardian_phone=entity.guardian_phone,
             is_active=entity.is_active,
             created_at=entity.created_at,
             updated_at=entity.updated_at
@@ -39,8 +37,6 @@ class StudentMapper:
             school_id=domain.school_id,
             enrollment_date=domain.enrollment_date,
             address=domain.address,
-            guardian_name=domain.guardian_name,
-            guardian_phone=domain.guardian_phone,
             is_active=domain.is_active
         )
         
@@ -65,8 +61,6 @@ class StudentMapper:
         entity.school_id = domain.school_id
         entity.enrollment_date = domain.enrollment_date
         entity.address = domain.address
-        entity.guardian_name = domain.guardian_name
-        entity.guardian_phone = domain.guardian_phone
         entity.is_active = domain.is_active
         
         return entity

@@ -37,8 +37,6 @@ class StudentService:
             school_id=student_data.school_id,
             enrollment_date=student_data.enrollment_date,
             address=student_data.address,
-            guardian_name=student_data.guardian_name or "",
-            guardian_phone=student_data.guardian_phone or "",
             is_active=student_data.is_active
         )
         created_student = await self.student_repository.create(student)
@@ -59,8 +57,7 @@ class StudentService:
         
         # Map other fields directly
         for field in ['first_name', 'last_name', 'email', 'date_of_birth', 'grade_level', 
-                     'school_id', 'enrollment_date', 'address', 'guardian_name', 
-                     'guardian_phone', 'is_active']:
+                     'school_id', 'enrollment_date', 'address', 'is_active']:
             if field in dto_data:
                 update_data[field] = dto_data[field]
 
@@ -101,14 +98,7 @@ class StudentService:
             date_of_birth=student.date_of_birth,
             grade_level=student.grade_level,
             school_id=student.school_id,
-            student_id_number="",  # This field doesn't exist in domain model
             enrollment_date=student.enrollment_date,
-            guardian_name=student.guardian_name,
-            guardian_phone=student.guardian_phone,
-            guardian_email="",  # This field doesn't exist in domain model
             address=student.address,
-            city="",  # This field doesn't exist in domain model
-            state="",  # This field doesn't exist in domain model
-            zip_code="",  # This field doesn't exist in domain model
             is_active=student.is_active
         )
