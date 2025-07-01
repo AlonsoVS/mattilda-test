@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
+from app.domain.enums import InvoiceStatus, PaymentMethod
 
 
 class InvoiceCreateDTO(BaseModel):
@@ -13,7 +14,7 @@ class InvoiceCreateDTO(BaseModel):
     description: str
     invoice_date: date
     due_date: date
-    status: str = "pending"
+    status: InvoiceStatus = InvoiceStatus.PENDING
     notes: Optional[str] = None
 
 
@@ -28,8 +29,8 @@ class InvoiceUpdateDTO(BaseModel):
     invoice_date: Optional[date] = None
     due_date: Optional[date] = None
     payment_date: Optional[date] = None
-    status: Optional[str] = None
-    payment_method: Optional[str] = None
+    status: Optional[InvoiceStatus] = None
+    payment_method: Optional[PaymentMethod] = None
     notes: Optional[str] = None
 
 
@@ -46,8 +47,8 @@ class InvoiceResponseDTO(BaseModel):
     invoice_date: date
     due_date: date
     payment_date: Optional[date] = None
-    status: str
-    payment_method: Optional[str] = None
+    status: InvoiceStatus
+    payment_method: Optional[PaymentMethod] = None
     created_at: datetime
     updated_at: datetime
     notes: Optional[str] = None
@@ -59,5 +60,5 @@ class InvoiceResponseDTO(BaseModel):
 class PaymentRecordDTO(BaseModel):
     """DTO for recording payments"""
     payment_date: date
-    payment_method: str
+    payment_method: PaymentMethod
     notes: Optional[str] = None

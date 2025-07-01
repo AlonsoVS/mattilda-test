@@ -4,6 +4,7 @@ from app.infrastructure.database.connection import engine
 from app.infrastructure.persistence.school_entity import SchoolEntity
 from app.infrastructure.persistence.student_entity import StudentEntity
 from app.infrastructure.persistence.invoice_entity import InvoiceEntity
+from app.domain.enums import InvoiceStatus, PaymentMethod
 
 
 def seed_data():
@@ -128,8 +129,8 @@ def seed_data():
                 "invoice_date": date(2024, 1, 15),
                 "due_date": date(2024, 2, 15),
                 "payment_date": date(2024, 2, 10),
-                "status": "paid",
-                "payment_method": "bank_transfer",
+                "status": InvoiceStatus.PAID,
+                "payment_method": PaymentMethod.BANK_TRANSFER,
                 "created_at": datetime(2024, 1, 15, 9, 0, 0),
                 "updated_at": datetime(2024, 2, 10, 14, 30, 0),
                 "notes": "Payment received on time"
@@ -145,7 +146,7 @@ def seed_data():
                 "invoice_date": date(2024, 1, 20),
                 "due_date": date(2024, 2, 20),
                 "payment_date": None,
-                "status": "pending",
+                "status": InvoiceStatus.PENDING,
                 "payment_method": None,
                 "created_at": datetime(2024, 1, 20, 10, 0, 0),
                 "updated_at": datetime(2024, 1, 20, 10, 0, 0),

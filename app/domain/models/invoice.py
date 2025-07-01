@@ -1,6 +1,7 @@
 from typing import Optional
 from datetime import date, datetime
 from dataclasses import dataclass
+from app.domain.enums import InvoiceStatus, PaymentMethod
 
 
 @dataclass
@@ -15,9 +16,9 @@ class Invoice:
     description: str
     invoice_date: date
     due_date: date
-    status: str = "pending"  # "pending", "paid", "overdue", "cancelled"
+    status: InvoiceStatus = InvoiceStatus.PENDING
     payment_date: Optional[date] = None
-    payment_method: Optional[str] = None  # "cash", "credit_card", "bank_transfer", "check"
+    payment_method: Optional[PaymentMethod] = None
     notes: Optional[str] = None
     id: Optional[int] = None
     created_at: Optional[datetime] = None
@@ -33,17 +34,17 @@ class Invoice:
             raise ValueError("Total amount must equal amount plus tax amount")
         if self.due_date < self.invoice_date:
             raise ValueError("Due date cannot be before invoice date")
-        if self.status not in ["pending", "paid", "overdue", "cancelled"]:
+        if self.status not in [InvoiceStatus.PENDING, InvoiceStatus.PAID, InvoiceStatus.OVERDUE, InvoiceStatus.CANCELLED]:
             raise ValueError("Invalid invoice status")
 
-    def mark_as_paid(self, payment_date: date, payment_method: str, notes: Optional[str] = None) -> None:
+    def mark_as_paid(self, payment_date: date, payment_method: PaymentMethod, notes: Optional[str] = None) -> None:
         """Mark invoice as paid"""
-        if self.status == "paid":
+        if self.status == InvoiceStatus.PAID:
             raise ValueError("Invoice is already paid")
-        if self.status == "cancelled":
+        if self.status == InvoiceStatus.CANCELLED:
             raise ValueError("Cannot pay a cancelled invoice")
         
-        self.status = "paid"
+        self.status = InvoiceStatus.PAID
         self.payment_date = payment_date
         self.payment_method = payment_method
         if notes:
@@ -51,10 +52,10 @@ class Invoice:
 
     def cancel(self, reason: Optional[str] = None) -> None:
         """Cancel the invoice"""
-        if self.status == "paid":
+        if self.status == InvoiceStatus.PAID:
             raise ValueError("Cannot cancel a paid invoice")
         
-        self.status = "cancelled"
+        self.status = InvoiceStatus.CANCELLED
         if reason:
             self.notes = reason
 
@@ -62,7 +63,7 @@ class Invoice:
         """Check if invoice is overdue"""
         if current_date is None:
             current_date = date.today()
-        return self.status == "pending" and self.due_date < current_date
+        return self.status == InvoiceStatus.PENDING and self.due_date < current_date
 
     def update(self, **kwargs) -> 'Invoice':
         """Update invoice fields and return new instance"""

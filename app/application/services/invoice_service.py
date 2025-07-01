@@ -1,6 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from app.domain.models.invoice import Invoice
+from app.domain.enums import InvoiceStatus, PaymentMethod
 from app.domain.repositories.invoice_repository import InvoiceRepositoryInterface
 from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
@@ -41,7 +42,7 @@ class InvoiceService:
             description=invoice_data.description,
             invoice_date=invoice_data.invoice_date,
             due_date=invoice_data.due_date,
-            status="pending",
+            status=InvoiceStatus.PENDING,
             created_at=current_time,
             updated_at=current_time
         )
@@ -96,13 +97,13 @@ class InvoiceService:
         if not invoice:
             return None
 
-        if invoice.status == "paid":
+        if invoice.status == InvoiceStatus.PAID:
             raise ValueError("Invoice is already paid")
 
         update_data = {
             "payment_date": payment_data.payment_date,
             "payment_method": payment_data.payment_method,
-            "status": "paid"
+            "status": InvoiceStatus.PAID
         }
         
         if payment_data.notes:

@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, TYPE_CHECKING
 from datetime import date, datetime
+from app.domain.enums import InvoiceStatus, PaymentMethod
 
 if TYPE_CHECKING:
     from .student_entity import StudentEntity
@@ -19,8 +20,8 @@ class InvoiceBase(SQLModel):
     invoice_date: date
     due_date: date
     payment_date: Optional[date] = None
-    status: str = "pending"  # "pending", "paid", "overdue", "cancelled"
-    payment_method: Optional[str] = None  # "cash", "credit_card", "bank_transfer", "check"
+    status: InvoiceStatus = InvoiceStatus.PENDING
+    payment_method: Optional[PaymentMethod] = None
     notes: Optional[str] = None
 
 
