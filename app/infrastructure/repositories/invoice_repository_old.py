@@ -39,8 +39,6 @@ class InvoiceRepository(InvoiceRepositoryInterface):
         self.session.add(entity)
         self.session.commit()
         self.session.refresh(entity)
-        return InvoiceMapper.to_domain(entity)
-
     async def update(self, invoice: Invoice) -> Invoice:
         """Update an existing invoice"""
         if invoice.id is None:
@@ -111,4 +109,15 @@ class InvoiceRepository(InvoiceRepositoryInterface):
         
         # Convert to domain models
         invoices = [InvoiceMapper.to_domain(entity) for entity in entities]
+        return invoices, total
+        total = self.session.exec(count_statement).one()
+        return invoices, total
+
+    async def get_by_status(self, status: str, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices by status with pagination"""
+        statement = select(Invoice).where(Invoice.status == status.lower()).offset(offset).limit(limit)
+        result = self.session.exec(statement)
+        invoices = list(result.all())
+        count_statement = select(func.count()).select_from(Invoice).where(Invoice.status == status.lower())
+        total = self.session.exec(count_statement).one()
         return invoices, total

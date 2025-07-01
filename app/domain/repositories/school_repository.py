@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
-from app.domain.entities.school import School
+from app.domain.models.school import School
 
 
 class SchoolRepositoryInterface(ABC):

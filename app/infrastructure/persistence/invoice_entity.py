@@ -3,15 +3,15 @@ from typing import Optional, TYPE_CHECKING
 from datetime import date, datetime
 
 if TYPE_CHECKING:
-    from .student import Student
-    from .school import School
+    from .student_entity import StudentEntity
+    from .school_entity import SchoolEntity
 
 
 class InvoiceBase(SQLModel):
-    """Base invoice model with common fields"""
+    """Base invoice entity with common fields"""
     invoice_number: str
-    student_id: int = Field(foreign_key="student.id")
-    school_id: int = Field(foreign_key="school.id")
+    student_id: int = Field(foreign_key="students.id")
+    school_id: int = Field(foreign_key="schools.id")
     amount: float
     tax_amount: float
     total_amount: float
@@ -24,13 +24,15 @@ class InvoiceBase(SQLModel):
     notes: Optional[str] = None
 
 
-class Invoice(InvoiceBase, table=True):
-    """Invoice database entity"""
+class InvoiceEntity(InvoiceBase, table=True):
+    """Invoice persistence entity"""
+    
+    __tablename__ = "invoices" # type: ignore
     
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     
     # Relationships
-    student: Optional["Student"] = Relationship(back_populates="invoices")
-    school: Optional["School"] = Relationship(back_populates="invoices")
+    student: Optional["StudentEntity"] = Relationship(back_populates="invoices")
+    school: Optional["SchoolEntity"] = Relationship(back_populates="invoices")

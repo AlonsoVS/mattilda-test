@@ -5,6 +5,11 @@ from app.infrastructure.database.connection import create_db_and_tables
 from app.infrastructure.database.seed_data import seed_data
 from app.presentation.api.v1.api import api_router
 
+# Import persistence entities so SQLModel can register them
+from app.infrastructure.persistence.school_entity import SchoolEntity
+from app.infrastructure.persistence.student_entity import StudentEntity
+from app.infrastructure.persistence.invoice_entity import InvoiceEntity
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

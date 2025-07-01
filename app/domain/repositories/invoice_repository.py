@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
-from app.domain.entities.invoice import Invoice
+from app.domain.models.invoice import Invoice
 
 
 class InvoiceRepositoryInterface(ABC):

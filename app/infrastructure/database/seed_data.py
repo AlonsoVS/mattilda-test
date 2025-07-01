@@ -1,16 +1,16 @@
 from datetime import date, datetime
 from sqlmodel import Session, select
 from app.infrastructure.database.connection import engine
-from app.domain.entities.school import School
-from app.domain.entities.student import Student
-from app.domain.entities.invoice import Invoice
+from app.infrastructure.persistence.school_entity import SchoolEntity
+from app.infrastructure.persistence.student_entity import StudentEntity
+from app.infrastructure.persistence.invoice_entity import InvoiceEntity
 
 
 def seed_data():
     """Seed the database with initial data"""
     with Session(engine) as session:
         # Check if data already exists
-        existing_schools = session.exec(select(School)).first()
+        existing_schools = session.exec(select(SchoolEntity)).first()
         if existing_schools:
             print("Database already seeded, skipping...")
             return
@@ -23,10 +23,10 @@ def seed_data():
                 "city": "Springfield",
                 "state": "Illinois",
                 "zip_code": "62701",
-                "phone": "(217) 555-0101",
+                "phone_number": "(217) 555-0101",
                 "email": "info@lincoln.edu",
-                "principal": "Sarah Johnson",
-                "student_count": 450,
+                "principal_name": "Sarah Johnson",
+                "established_year": 1985,
                 "is_active": True
             },
             {
@@ -35,10 +35,10 @@ def seed_data():
                 "city": "Madison",
                 "state": "Wisconsin",
                 "zip_code": "53703",
-                "phone": "(608) 555-0202",
+                "phone_number": "(608) 555-0202",
                 "email": "admin@washington.edu",
-                "principal": "Michael Chen",
-                "student_count": 1200,
+                "principal_name": "Michael Chen",
+                "established_year": 1963,
                 "is_active": True
             },
             {
@@ -47,10 +47,10 @@ def seed_data():
                 "city": "Portland",
                 "state": "Oregon",
                 "zip_code": "97201",
-                "phone": "(503) 555-0303",
+                "phone_number": "(503) 555-0303",
                 "email": "contact@roosevelt.edu",
-                "principal": "Jennifer Davis",
-                "student_count": 680,
+                "principal_name": "Jennifer Davis",
+                "established_year": 1978,
                 "is_active": True
             },
             {
@@ -59,17 +59,17 @@ def seed_data():
                 "city": "Austin",
                 "state": "Texas",
                 "zip_code": "73301",
-                "phone": "(512) 555-0404",
+                "phone_number": "(512) 555-0404",
                 "email": "office@jefferson.edu",
-                "principal": "Robert Martinez",
-                "student_count": 890,
+                "principal_name": "Robert Martinez",
+                "established_year": 1992,
                 "is_active": True
             }
         ]
 
         schools = []
         for school_data in schools_data:
-            school = School(**school_data)
+            school = SchoolEntity(**school_data)
             session.add(school)
             schools.append(school)
         
@@ -81,45 +81,35 @@ def seed_data():
                 "first_name": "Emma",
                 "last_name": "Johnson",
                 "email": "emma.johnson@email.com",
-                "phone": "(217) 555-1001",
+                "phone_number": "(217) 555-1001",
                 "date_of_birth": date(2010, 3, 15),
                 "grade_level": 8,
                 "school_id": 1,
-                "student_id_number": "LIN001",
                 "enrollment_date": date(2023, 8, 15),
+                "address": "456 School Street",
                 "guardian_name": "Mary Johnson",
                 "guardian_phone": "(217) 555-1000",
-                "guardian_email": "mary.johnson@email.com",
-                "address": "456 School Street",
-                "city": "Springfield",
-                "state": "Illinois",
-                "zip_code": "62701",
                 "is_active": True
             },
             {
                 "first_name": "Liam",
                 "last_name": "Chen",
                 "email": "liam.chen@email.com",
-                "phone": "(608) 555-2001",
+                "phone_number": "(608) 555-2001",
                 "date_of_birth": date(2006, 7, 22),
                 "grade_level": 12,
                 "school_id": 2,
-                "student_id_number": "WAS002",
                 "enrollment_date": date(2022, 8, 20),
+                "address": "789 Student Avenue",
                 "guardian_name": "David Chen",
                 "guardian_phone": "(608) 555-2000",
-                "guardian_email": "david.chen@email.com",
-                "address": "789 Student Avenue",
-                "city": "Madison",
-                "state": "Wisconsin",
-                "zip_code": "53703",
                 "is_active": True
             }
         ]
 
         students = []
         for student_data in students_data:
-            student = Student(**student_data)
+            student = StudentEntity(**student_data)
             session.add(student)
             students.append(student)
             
@@ -164,7 +154,7 @@ def seed_data():
         ]
 
         for invoice_data in invoices_data:
-            invoice = Invoice(**invoice_data)
+            invoice = InvoiceEntity(**invoice_data)
             session.add(invoice)
             
         session.commit()

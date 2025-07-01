@@ -1,7 +1,10 @@
 from typing import List, Optional, Tuple
 from sqlmodel import Session, select, col, func
-from app.domain.entities.school import School
+from datetime import datetime
+from app.domain.models.school import School
 from app.domain.repositories.school_repository import SchoolRepositoryInterface
+from app.infrastructure.persistence.school_entity import SchoolEntity
+from app.infrastructure.mappers.school_mapper import SchoolMapper
 
 
 class SchoolRepository(SchoolRepositoryInterface):
@@ -13,63 +16,88 @@ class SchoolRepository(SchoolRepositoryInterface):
     async def get_all(self, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
         """Get all schools with pagination"""
         # Get total count
-        count_statement = select(func.count()).select_from(School)
+        count_statement = select(func.count()).select_from(SchoolEntity)
         total = self.session.exec(count_statement).one()
         
         # Get paginated results
-        statement = select(School).offset(offset).limit(limit)
+        statement = select(SchoolEntity).offset(offset).limit(limit)
         result = self.session.exec(statement)
-        return list(result.all()), total
+        entities = list(result.all())
+        
+        # Convert to domain models
+        schools = [SchoolMapper.to_domain(entity) for entity in entities]
+        return schools, total
 
     async def get_by_id(self, school_id: int) -> Optional[School]:
         """Get school by ID"""
-        return self.session.get(School, school_id)
+        entity = self.session.get(SchoolEntity, school_id)
+        return SchoolMapper.to_domain(entity) if entity else None
 
     async def create(self, school: School) -> School:
         """Create a new school"""
-        self.session.add(school)
+        entity = SchoolMapper.to_entity(school)
+        self.session.add(entity)
         self.session.commit()
-        self.session.refresh(school)
-        return school
+        self.session.refresh(entity)
+        return SchoolMapper.to_domain(entity)
 
     async def update(self, school: School) -> School:
         """Update an existing school"""
-        self.session.add(school)
+        if school.id is None:
+            raise ValueError("Cannot update school without ID")
+            
+        entity = self.session.get(SchoolEntity, school.id)
+        if not entity:
+            raise ValueError(f"School with ID {school.id} not found")
+            
+        # Update entity with domain model data
+        entity.updated_at = datetime.now()
+        SchoolMapper.update_entity(entity, school)
+        
+        self.session.add(entity)
         self.session.commit()
-        self.session.refresh(school)
-        return school
+        self.session.refresh(entity)
+        return SchoolMapper.to_domain(entity)
 
     async def delete(self, school_id: int) -> bool:
         """Delete a school"""
-        school = self.session.get(School, school_id)
-        if school:
-            self.session.delete(school)
+        entity = self.session.get(SchoolEntity, school_id)
+        if entity:
+            self.session.delete(entity)
             self.session.commit()
             return True
         return False
 
     async def get_by_city(self, city: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
         """Get schools by city with pagination"""
-        city_filter = col(School.city).ilike(f"%{city}%")
+        city_filter = col(SchoolEntity.city).ilike(f"%{city}%")
         
         # Get total count
-        count_statement = select(func.count()).select_from(School).where(city_filter)
+        count_statement = select(func.count()).select_from(SchoolEntity).where(city_filter)
         total = self.session.exec(count_statement).one()
         
         # Get paginated results
-        statement = select(School).where(city_filter).offset(offset).limit(limit)
+        statement = select(SchoolEntity).where(city_filter).offset(offset).limit(limit)
         result = self.session.exec(statement)
-        return list(result.all()), total
+        entities = list(result.all())
+        
+        # Convert to domain models
+        schools = [SchoolMapper.to_domain(entity) for entity in entities]
+        return schools, total
 
     async def get_by_state(self, state: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
         """Get schools by state with pagination"""
-        state_filter = col(School.state).ilike(f"%{state}%")
+        state_filter = col(SchoolEntity.state).ilike(f"%{state}%")
         
         # Get total count
-        count_statement = select(func.count()).select_from(School).where(state_filter)
+        count_statement = select(func.count()).select_from(SchoolEntity).where(state_filter)
         total = self.session.exec(count_statement).one()
         
         # Get paginated results
-        statement = select(School).where(state_filter).offset(offset).limit(limit)
+        statement = select(SchoolEntity).where(state_filter).offset(offset).limit(limit)
         result = self.session.exec(statement)
-        return list(result.all()), total
+        entities = list(result.all())
+        
+        # Convert to domain models
+        schools = [SchoolMapper.to_domain(entity) for entity in entities]
+        return schools, total
