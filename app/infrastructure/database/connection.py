@@ -1,14 +1,8 @@
-import os
 from sqlmodel import create_engine, SQLModel, Session
-
-# Database URL from environment variable with default for development
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:Post12.gres@localhost:5432/mattilda_db"
-)
+from app.core.config import settings
 
 # Create engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=settings.DB_ECHO)
 
 
 def create_db_and_tables():

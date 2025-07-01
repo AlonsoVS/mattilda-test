@@ -1,3 +1,9 @@
 {
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.analysis.extraPaths": [
+    "./app"
+  ],
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.autoImportCompletions": true
 }

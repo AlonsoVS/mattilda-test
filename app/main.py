@@ -1,15 +1,35 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.api.main import api_router
-from app.database import create_db_and_tables
-from app.seed_data import seed_data
+from app.core.config import settings
+from app.infrastructure.database.connection import create_db_and_tables
+from app.infrastructure.database.seed_data import seed_data
+from app.presentation.api.v1.api import api_router
 
 
-app = FastAPI(title="Mattilda API", description="School Management System API", version="1.0.0")
-
-# Create database tables and seed data on startup
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events"""
+    # Startup
     create_db_and_tables()
     seed_data()
+    yield
+    # Shutdown (if needed)
 
-app.include_router(api_router)
+
+def create_app() -> FastAPI:
+    """Create FastAPI application"""
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        description=settings.PROJECT_DESCRIPTION,
+        version=settings.VERSION,
+        debug=settings.DEBUG,
+        lifespan=lifespan
+    )
+
+    # Include API routes
+    app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    return app
+
+
+app = create_app()
