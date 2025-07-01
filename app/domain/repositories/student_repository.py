@@ -32,21 +32,11 @@ class StudentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_school_id(self, school_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
-        """Get students by school ID with pagination"""
-        pass
-
-    @abstractmethod
-    async def get_by_grade_level(self, grade_level: int, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
-        """Get students by grade level with pagination"""
-        pass
-
-    @abstractmethod
-    async def search_by_name(self, name: str, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
-        """Search students by name with pagination"""
-        pass
-
-    @abstractmethod
     async def count_by_school_id(self, school_id: int) -> int:
         """Count students by school ID"""
+        pass
+
+    @abstractmethod
+    async def get_with_filters(self, filters: dict, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
+        """Get students with flexible filtering and pagination"""
         pass

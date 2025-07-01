@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import date
 from app.domain.models.student import Student
 from app.domain.repositories.student_repository import StudentRepositoryInterface
-from app.application.dtos.student_dto import StudentCreateDTO, StudentUpdateDTO, StudentResponseDTO
+from app.application.dtos.student_dto import StudentCreateDTO, StudentUpdateDTO, StudentResponseDTO, StudentFilterDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
 
 
@@ -15,6 +15,15 @@ class StudentService:
     async def get_all_students(self, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
         """Get all students with pagination"""
         students, total = await self.student_repository.get_all(pagination.offset, pagination.limit)
+        student_dtos = [self._to_response_dto(student) for student in students]
+        return PaginatedResponse.create(student_dtos, total, pagination)
+
+    async def get_students_with_filters(self, filters: StudentFilterDTO, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
+        """Get students with flexible filtering and pagination"""
+        # Convert DTO to dict, excluding None values
+        filter_dict = {k: v for k, v in filters.model_dump().items() if v is not None}
+        
+        students, total = await self.student_repository.get_with_filters(filter_dict, pagination.offset, pagination.limit)
         student_dtos = [self._to_response_dto(student) for student in students]
         return PaginatedResponse.create(student_dtos, total, pagination)
 
@@ -68,24 +77,6 @@ class StudentService:
     async def delete_student(self, student_id: int) -> bool:
         """Delete a student"""
         return await self.student_repository.delete(student_id)
-
-    async def get_students_by_school_id(self, school_id: int, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
-        """Get students by school ID with pagination"""
-        students, total = await self.student_repository.get_by_school_id(school_id, pagination.offset, pagination.limit)
-        student_dtos = [self._to_response_dto(student) for student in students]
-        return PaginatedResponse.create(student_dtos, total, pagination)
-
-    async def get_students_by_grade_level(self, grade_level: int, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
-        """Get students by grade level with pagination"""
-        students, total = await self.student_repository.get_by_grade_level(grade_level, pagination.offset, pagination.limit)
-        student_dtos = [self._to_response_dto(student) for student in students]
-        return PaginatedResponse.create(student_dtos, total, pagination)
-
-    async def search_students_by_name(self, name: str, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
-        """Search students by name with pagination"""
-        students, total = await self.student_repository.search_by_name(name, pagination.offset, pagination.limit)
-        student_dtos = [self._to_response_dto(student) for student in students]
-        return PaginatedResponse.create(student_dtos, total, pagination)
 
     def _to_response_dto(self, student: Student) -> StudentResponseDTO:
         """Convert domain model to response DTO"""
