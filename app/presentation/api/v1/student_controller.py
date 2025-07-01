@@ -1,10 +1,11 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.student_repository import StudentRepository
 from app.application.services.student_service import StudentService
 from app.application.dtos.student_dto import StudentCreateDTO, StudentUpdateDTO, StudentResponseDTO
+from app.core.pagination import PaginationParams, PaginatedResponse
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -15,10 +16,15 @@ def get_student_service(session: Session = Depends(get_session)) -> StudentServi
     return StudentService(student_repository)
 
 
-@router.get("/", response_model=List[StudentResponseDTO])
-async def get_students(student_service: StudentService = Depends(get_student_service)):
-    """Get all students"""
-    return await student_service.get_all_students()
+@router.get("/", response_model=PaginatedResponse[StudentResponseDTO])
+async def get_students(
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
+    student_service: StudentService = Depends(get_student_service)
+):
+    """Get all students with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await student_service.get_all_students(pagination)
 
 
 @router.get("/{student_id}", response_model=StudentResponseDTO)
@@ -64,28 +70,37 @@ async def delete_student(
     return {"message": "Student deleted successfully"}
 
 
-@router.get("/school/{school_id}", response_model=List[StudentResponseDTO])
+@router.get("/school/{school_id}", response_model=PaginatedResponse[StudentResponseDTO])
 async def get_students_by_school(
     school_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
     student_service: StudentService = Depends(get_student_service)
 ):
-    """Get students by school ID"""
-    return await student_service.get_students_by_school_id(school_id)
+    """Get students by school ID with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await student_service.get_students_by_school_id(school_id, pagination)
 
 
-@router.get("/grade/{grade_level}", response_model=List[StudentResponseDTO])
+@router.get("/grade/{grade_level}", response_model=PaginatedResponse[StudentResponseDTO])
 async def get_students_by_grade(
     grade_level: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
     student_service: StudentService = Depends(get_student_service)
 ):
-    """Get students by grade level"""
-    return await student_service.get_students_by_grade_level(grade_level)
+    """Get students by grade level with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await student_service.get_students_by_grade_level(grade_level, pagination)
 
 
-@router.get("/search/by-name/{name}", response_model=List[StudentResponseDTO])
+@router.get("/search/by-name/{name}", response_model=PaginatedResponse[StudentResponseDTO])
 async def search_students_by_name(
     name: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
     student_service: StudentService = Depends(get_student_service)
 ):
-    """Search students by first or last name"""
-    return await student_service.search_students_by_name(name)
+    """Search students by first or last name with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await student_service.search_students_by_name(name, pagination)

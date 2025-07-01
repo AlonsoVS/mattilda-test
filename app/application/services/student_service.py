@@ -2,6 +2,7 @@ from typing import List, Optional
 from app.domain.entities.student import Student
 from app.domain.repositories.student_repository import StudentRepositoryInterface
 from app.application.dtos.student_dto import StudentCreateDTO, StudentUpdateDTO, StudentResponseDTO
+from app.core.pagination import PaginationParams, PaginatedResponse
 
 
 class StudentService:
@@ -10,10 +11,11 @@ class StudentService:
     def __init__(self, student_repository: StudentRepositoryInterface):
         self.student_repository = student_repository
 
-    async def get_all_students(self) -> List[StudentResponseDTO]:
-        """Get all students"""
-        students = await self.student_repository.get_all()
-        return [StudentResponseDTO.model_validate(student) for student in students]
+    async def get_all_students(self, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
+        """Get all students with pagination"""
+        students, total = await self.student_repository.get_all(pagination.offset, pagination.limit)
+        student_dtos = [StudentResponseDTO.model_validate(student) for student in students]
+        return PaginatedResponse.create(student_dtos, total, pagination)
 
     async def get_student_by_id(self, student_id: int) -> Optional[StudentResponseDTO]:
         """Get student by ID"""
@@ -46,17 +48,20 @@ class StudentService:
         """Delete a student"""
         return await self.student_repository.delete(student_id)
 
-    async def get_students_by_school_id(self, school_id: int) -> List[StudentResponseDTO]:
-        """Get students by school ID"""
-        students = await self.student_repository.get_by_school_id(school_id)
-        return [StudentResponseDTO.model_validate(student) for student in students]
+    async def get_students_by_school_id(self, school_id: int, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
+        """Get students by school ID with pagination"""
+        students, total = await self.student_repository.get_by_school_id(school_id, pagination.offset, pagination.limit)
+        student_dtos = [StudentResponseDTO.model_validate(student) for student in students]
+        return PaginatedResponse.create(student_dtos, total, pagination)
 
-    async def get_students_by_grade_level(self, grade_level: int) -> List[StudentResponseDTO]:
-        """Get students by grade level"""
-        students = await self.student_repository.get_by_grade_level(grade_level)
-        return [StudentResponseDTO.model_validate(student) for student in students]
+    async def get_students_by_grade_level(self, grade_level: int, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
+        """Get students by grade level with pagination"""
+        students, total = await self.student_repository.get_by_grade_level(grade_level, pagination.offset, pagination.limit)
+        student_dtos = [StudentResponseDTO.model_validate(student) for student in students]
+        return PaginatedResponse.create(student_dtos, total, pagination)
 
-    async def search_students_by_name(self, name: str) -> List[StudentResponseDTO]:
-        """Search students by name"""
-        students = await self.student_repository.search_by_name(name)
-        return [StudentResponseDTO.model_validate(student) for student in students]
+    async def search_students_by_name(self, name: str, pagination: PaginationParams) -> PaginatedResponse[StudentResponseDTO]:
+        """Search students by name with pagination"""
+        students, total = await self.student_repository.search_by_name(name, pagination.offset, pagination.limit)
+        student_dtos = [StudentResponseDTO.model_validate(student) for student in students]
+        return PaginatedResponse.create(student_dtos, total, pagination)

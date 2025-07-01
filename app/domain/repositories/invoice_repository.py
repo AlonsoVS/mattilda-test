@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.domain.entities.invoice import Invoice
 
 
@@ -7,8 +7,8 @@ class InvoiceRepositoryInterface(ABC):
     """Interface for invoice repository"""
 
     @abstractmethod
-    async def get_all(self) -> List[Invoice]:
-        """Get all invoices"""
+    async def get_all(self, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get all invoices with pagination"""
         pass
 
     @abstractmethod
@@ -32,16 +32,16 @@ class InvoiceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_student_id(self, student_id: int) -> List[Invoice]:
-        """Get invoices by student ID"""
+    async def get_by_student_id(self, student_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices by student ID with pagination"""
         pass
 
     @abstractmethod
-    async def get_by_school_id(self, school_id: int) -> List[Invoice]:
-        """Get invoices by school ID"""
+    async def get_by_school_id(self, school_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices by school ID with pagination"""
         pass
 
     @abstractmethod
-    async def get_by_status(self, status: str) -> List[Invoice]:
-        """Get invoices by status"""
+    async def get_by_status(self, status: str, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices by status with pagination"""
         pass

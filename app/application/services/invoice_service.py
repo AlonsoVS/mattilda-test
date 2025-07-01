@@ -3,6 +3,7 @@ from datetime import datetime
 from app.domain.entities.invoice import Invoice
 from app.domain.repositories.invoice_repository import InvoiceRepositoryInterface
 from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO
+from app.core.pagination import PaginationParams, PaginatedResponse
 
 
 class InvoiceService:
@@ -11,10 +12,11 @@ class InvoiceService:
     def __init__(self, invoice_repository: InvoiceRepositoryInterface):
         self.invoice_repository = invoice_repository
 
-    async def get_all_invoices(self) -> List[InvoiceResponseDTO]:
-        """Get all invoices"""
-        invoices = await self.invoice_repository.get_all()
-        return [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+    async def get_all_invoices(self, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
+        """Get all invoices with pagination"""
+        invoices, total = await self.invoice_repository.get_all(pagination.offset, pagination.limit)
+        invoice_dtos = [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+        return PaginatedResponse.create(invoice_dtos, total, pagination)
 
     async def get_invoice_by_id(self, invoice_id: int) -> Optional[InvoiceResponseDTO]:
         """Get invoice by ID"""
@@ -61,20 +63,23 @@ class InvoiceService:
         """Delete an invoice"""
         return await self.invoice_repository.delete(invoice_id)
 
-    async def get_invoices_by_student_id(self, student_id: int) -> List[InvoiceResponseDTO]:
-        """Get invoices by student ID"""
-        invoices = await self.invoice_repository.get_by_student_id(student_id)
-        return [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+    async def get_invoices_by_student_id(self, student_id: int, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
+        """Get invoices by student ID with pagination"""
+        invoices, total = await self.invoice_repository.get_by_student_id(student_id, pagination.offset, pagination.limit)
+        invoice_dtos = [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+        return PaginatedResponse.create(invoice_dtos, total, pagination)
 
-    async def get_invoices_by_school_id(self, school_id: int) -> List[InvoiceResponseDTO]:
-        """Get invoices by school ID"""
-        invoices = await self.invoice_repository.get_by_school_id(school_id)
-        return [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+    async def get_invoices_by_school_id(self, school_id: int, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
+        """Get invoices by school ID with pagination"""
+        invoices, total = await self.invoice_repository.get_by_school_id(school_id, pagination.offset, pagination.limit)
+        invoice_dtos = [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+        return PaginatedResponse.create(invoice_dtos, total, pagination)
 
-    async def get_invoices_by_status(self, status: str) -> List[InvoiceResponseDTO]:
-        """Get invoices by status"""
-        invoices = await self.invoice_repository.get_by_status(status)
-        return [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+    async def get_invoices_by_status(self, status: str, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
+        """Get invoices by status with pagination"""
+        invoices, total = await self.invoice_repository.get_by_status(status, pagination.offset, pagination.limit)
+        invoice_dtos = [InvoiceResponseDTO.model_validate(invoice) for invoice in invoices]
+        return PaginatedResponse.create(invoice_dtos, total, pagination)
 
     async def record_payment(self, invoice_id: int, payment_data: PaymentRecordDTO) -> Optional[InvoiceResponseDTO]:
         """Record a payment for an invoice"""

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.domain.entities.student import Student
 
 
@@ -7,8 +7,8 @@ class StudentRepositoryInterface(ABC):
     """Interface for student repository"""
 
     @abstractmethod
-    async def get_all(self) -> List[Student]:
-        """Get all students"""
+    async def get_all(self, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
+        """Get all students with pagination"""
         pass
 
     @abstractmethod
@@ -32,16 +32,16 @@ class StudentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_school_id(self, school_id: int) -> List[Student]:
-        """Get students by school ID"""
+    async def get_by_school_id(self, school_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
+        """Get students by school ID with pagination"""
         pass
 
     @abstractmethod
-    async def get_by_grade_level(self, grade_level: int) -> List[Student]:
-        """Get students by grade level"""
+    async def get_by_grade_level(self, grade_level: int, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
+        """Get students by grade level with pagination"""
         pass
 
     @abstractmethod
-    async def search_by_name(self, name: str) -> List[Student]:
-        """Search students by name"""
+    async def search_by_name(self, name: str, offset: int = 0, limit: int = 10) -> Tuple[List[Student], int]:
+        """Search students by name with pagination"""
         pass

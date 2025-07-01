@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.domain.entities.school import School
 
 
@@ -7,8 +7,8 @@ class SchoolRepositoryInterface(ABC):
     """Interface for school repository"""
 
     @abstractmethod
-    async def get_all(self) -> List[School]:
-        """Get all schools"""
+    async def get_all(self, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
+        """Get all schools with pagination"""
         pass
 
     @abstractmethod
@@ -32,11 +32,11 @@ class SchoolRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_city(self, city: str) -> List[School]:
-        """Get schools by city"""
+    async def get_by_city(self, city: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
+        """Get schools by city with pagination"""
         pass
 
     @abstractmethod
-    async def get_by_state(self, state: str) -> List[School]:
-        """Get schools by state"""
+    async def get_by_state(self, state: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
+        """Get schools by state with pagination"""
         pass

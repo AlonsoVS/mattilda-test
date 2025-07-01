@@ -1,10 +1,11 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.school_repository import SchoolRepository
 from app.application.services.school_service import SchoolService
 from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO
+from app.core.pagination import PaginationParams, PaginatedResponse
 
 router = APIRouter(prefix="/schools", tags=["schools"])
 
@@ -15,10 +16,15 @@ def get_school_service(session: Session = Depends(get_session)) -> SchoolService
     return SchoolService(school_repository)
 
 
-@router.get("/", response_model=List[SchoolResponseDTO])
-async def get_schools(school_service: SchoolService = Depends(get_school_service)):
-    """Get all schools"""
-    return await school_service.get_all_schools()
+@router.get("/", response_model=PaginatedResponse[SchoolResponseDTO])
+async def get_schools(
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
+    school_service: SchoolService = Depends(get_school_service)
+):
+    """Get all schools with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await school_service.get_all_schools(pagination)
 
 
 @router.get("/{school_id}", response_model=SchoolResponseDTO)
@@ -64,19 +70,25 @@ async def delete_school(
     return {"message": "School deleted successfully"}
 
 
-@router.get("/search/by-city/{city}", response_model=List[SchoolResponseDTO])
+@router.get("/search/by-city/{city}", response_model=PaginatedResponse[SchoolResponseDTO])
 async def get_schools_by_city(
     city: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
     school_service: SchoolService = Depends(get_school_service)
 ):
-    """Get schools by city"""
-    return await school_service.get_schools_by_city(city)
+    """Get schools by city with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await school_service.get_schools_by_city(city, pagination)
 
 
-@router.get("/search/by-state/{state}", response_model=List[SchoolResponseDTO])
+@router.get("/search/by-state/{state}", response_model=PaginatedResponse[SchoolResponseDTO])
 async def get_schools_by_state(
     state: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
     school_service: SchoolService = Depends(get_school_service)
 ):
-    """Get schools by state"""
-    return await school_service.get_schools_by_state(state)
+    """Get schools by state with pagination"""
+    pagination = PaginationParams(page=page, size=size)
+    return await school_service.get_schools_by_state(state, pagination)
