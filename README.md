@@ -4,15 +4,477 @@ A modern school management system built with FastAPI, PostgreSQL, and clean arch
 
 ## 🏗️ Architecture
 
-This project follows **Domain-Driven Design (DDD)** and **Clean Architecture** principles:
+This project implements **Domain-Driven Design (DDD)** and **Clean Architecture** principles to create a maintainable, testable, and scalable application. The architecture emphasizes separation of concerns, dependency inversion, and business logic isolation.
+
+### 🎯 **Architectural Principles**
+
+#### **Domain-Driven Design (DDD)**
+- **Domain Focus**: Business logic is central to the application design
+- **Ubiquitous Language**: Consistent terminology between developers and domain experts
+- **Bounded Contexts**: Clear boundaries between different business domains
+- **Domain Models**: Rich domain objects that encapsulate business rules
+
+#### **Clean Architecture (Hexagonal Architecture)**
+- **Dependency Rule**: Dependencies point inward toward the domain
+- **Framework Independence**: Business logic doesn't depend on frameworks
+- **Database Independence**: Domain layer is agnostic to data storage
+- **UI Independence**: Business logic can work with any interface
+- **Testability**: Business logic can be tested without external dependencies
+
+## 🏗️ Project Structure
+
+```
+mattilda-test/
+├── app/
+│   ├── core/                 # Configuration and utilities
+│   ├── domain/              # Domain models and business logic
+│   │   ├── models/          # Domain entities
+│   │   ├── repositories/    # Repository interfaces
+│   │   └── enums.py         # Domain enums
+│   ├── application/         # Application layer
+│   │   ├── dtos/           # Data transfer objects
+│   │   └── services/       # Application services
+│   ├── infrastructure/      # Infrastructure layer
+│   │   ├── database/       # Database connection
+│   │   ├── persistence/    # Database entities
+│   │   ├── repositories/   # Repository implementations
+│   │   └── mappers/        # Domain/Entity mappers
+│   └── presentation/        # Presentation layer
+│       └── api/v1/         # API controllers
+├── tests/
+│   └── unit/domain/        # Domain model tests
+├── docker/                 # Docker configuration
+├── Dockerfile             # Development container
+├── Dockerfile.prod        # Production container
+├── docker-compose.yml     # Development orchestration
+├── docker-compose.prod.yml # Production orchestration
+├── Makefile              # Convenience commands
+└── requirements.txt      # Python dependencies
+```
+
+### 🏛️ **Layer Structure**
 
 ```
 app/
-├── core/           # Application configuration and shared utilities
-├── domain/         # Business logic and domain models
-├── application/    # Application services and DTOs
-├── infrastructure/ # External concerns (database, persistence)
-└── presentation/   # API controllers and routes
+├── 🎯 domain/         # Pure business logic (innermost layer)
+├── 🔧 application/    # Application services and use cases  
+├── 🏗️ infrastructure/ # External adapters and implementations
+├── 🎨 presentation/   # Controllers and API layer
+└── ⚙️ core/          # Cross-cutting concerns and configuration
+```
+
+### 📁 **Detailed Layer Breakdown**
+
+#### 🎯 **Domain Layer** (`app/domain/`)
+*The heart of the application - contains pure business logic*
+
+**Purpose**: Encapsulates business rules, entities, and domain logic without any external dependencies.
+
+**Structure**:
+```
+domain/
+├── models/           # Domain entities (pure Python dataclasses)
+│   ├── school.py     # School business entity with validation
+│   ├── student.py    # Student business entity with rules
+│   ├── invoice.py    # Invoice business entity with calculations
+│   └── user.py       # User business entity with authentication 
+|
+├── repositories/     # Abstract repository interfaces
+│   ├── school_repository.py     # School persistence contract
+│   ├── student_repository.py    # Student persistence contract
+│   ├── invoice_repository.py    # Invoice persistence contract
+│   └── user_repository.py       # User persistence contract
+└── enums.py         # Business enumerations (InvoiceStatus, PaymentMethod)
+```
+
+**Key Characteristics**:
+- ✅ **Pure Python**: No framework dependencies (FastAPI, SQLModel, etc.)
+- ✅ **Business Rules**: Validation and business logic in `__post_init__` methods
+- ✅ **Immutable Interfaces**: Repository interfaces define contracts without implementation
+- ✅ **Rich Domain Models**: Entities with behavior, not just data containers
+- ✅ **Framework Agnostic**: Can be used with any web framework or database
+
+**Example Domain Model**:
+```python
+@dataclass
+class School:
+    name: str
+    address: str
+    # ... other fields
+    
+    def __post_init__(self):
+        """Business rule validation"""
+        if not self.name.strip():
+            raise ValueError("School name cannot be empty")
+        if self.established_year < 1800:
+            raise ValueError("Invalid establishment year")
+    
+    def deactivate(self) -> None:
+        """Business operation"""
+        self.is_active = False
+```
+
+#### 🔧 **Application Layer** (`app/application/`)
+*Orchestrates domain objects to fulfill use cases*
+
+**Purpose**: Contains application-specific business rules and orchestrates domain objects to fulfill use cases.
+
+**Structure**:
+```
+application/
+├── services/         # Application services (use cases)
+│   ├── school_service.py     # School business operations
+│   ├── student_service.py    # Student business operations  
+│   ├── invoice_service.py    # Invoice business operations
+│   └── auth_service.py       # Authentication operations
+└── dtos/            # Data Transfer Objects
+    ├── school_dto.py         # School API contracts
+    ├── student_dto.py        # Student API contracts
+    ├── invoice_dto.py        # Invoice API contracts
+    └── auth_dto.py           # Authentication contracts
+```
+
+**Key Characteristics**:
+- ✅ **Use Case Implementation**: Implements specific business workflows
+- ✅ **Domain Orchestration**: Coordinates multiple domain entities
+- ✅ **Transaction Management**: Handles business transaction boundaries
+- ✅ **DTO Pattern**: Defines data contracts for external communication
+- ✅ **Dependency Injection**: Depends on domain interfaces, not implementations
+
+#### 🏗️ **Infrastructure Layer** (`app/infrastructure/`)
+*Implements external adapters and technical details*
+
+**Purpose**: Provides implementations for domain interfaces and handles all external concerns.
+
+**Structure**:
+```
+infrastructure/
+├── persistence/      # Database entities (SQLModel)
+│   ├── school_entity.py      # School database mapping
+│   ├── student_entity.py     # Student database mapping
+│   ├── invoice_entity.py     # Invoice database mapping
+│   └── user_entity.py        # User database mapping
+├── repositories/     # Repository implementations
+│   ├── school_repository.py  # School data access implementation
+│   ├── student_repository.py # Student data access implementation
+│   ├── invoice_repository.py # Invoice data access implementation
+│   └── user_repository.py    # User data access implementation
+├── mappers/         # Domain ↔ Persistence mapping
+│   ├── school_mapper.py      # School entity conversion
+│   ├── student_mapper.py     # Student entity conversion
+│   ├── invoice_mapper.py     # Invoice entity conversion
+│   └── user_mapper.py        # User entity conversion
+└── database/        # Database configuration
+    ├── connection.py         # Database connection setup
+    ├── seed_data.py          # Initial data population
+    └── migrations/           # Database schema changes
+```
+
+**Key Characteristics**:
+- ✅ **Dependency Implementation**: Implements domain repository interfaces
+- ✅ **Data Persistence**: Handles database operations with SQLModel/SQLAlchemy
+- ✅ **Entity Mapping**: Converts between domain models and database entities
+- ✅ **External Services**: Integrates with databases, APIs, file systems
+- ✅ **Framework Specific**: Contains framework-dependent code (FastAPI, SQLModel)
+
+#### 🎨 **Presentation Layer** (`app/presentation/`)
+*Handles HTTP requests and API concerns*
+
+**Purpose**: Manages HTTP communication, request/response handling, and API documentation.
+
+**Structure**:
+```
+presentation/
+└── api/v1/          # API version 1
+    ├── school_controller.py  # School HTTP endpoints
+    ├── student_controller.py # Student HTTP endpoints
+    ├── invoice_controller.py # Invoice HTTP endpoints
+    ├── auth_controller.py    # Authentication endpoints
+    ├── cache_controller.py   # Cache management endpoints
+    └── api.py               # API router configuration
+```
+
+**Key Characteristics**:
+- ✅ **HTTP Protocol**: Handles HTTP requests/responses
+- ✅ **API Documentation**: OpenAPI/Swagger documentation generation
+- ✅ **Authentication**: JWT token validation and authorization
+- ✅ **Validation**: Request/response validation with Pydantic
+- ✅ **Error Handling**: HTTP status codes and error responses
+
+#### ⚙️ **Core Layer** (`app/core/`)
+*Cross-cutting concerns and configuration*
+
+**Purpose**: Provides shared utilities, configuration, and cross-cutting concerns.
+
+**Structure**:
+```
+core/
+├── config.py        # Environment configuration
+├── auth.py          # Authentication utilities
+├── dependencies.py  # Dependency injection setup
+├── pagination.py    # Pagination utilities
+└── cache.py         # Caching utilities
+```
+
+**Key Characteristics**:
+- ✅ **Configuration Management**: Environment variables and settings
+- ✅ **Security**: JWT authentication and password hashing
+- ✅ **Dependency Injection**: FastAPI dependency providers
+- ✅ **Shared Utilities**: Pagination, caching, validation helpers
+
+### 🔄 **Data Flow Architecture**
+
+```
+HTTP Request → Presentation → Application → Domain ← Infrastructure
+     ↓              ↓            ↓          ↓         ↓
+1. API Controller   2. Service    3. Domain   4. Repository
+2. Validate Request 3. Business   4. Business 5. Database
+3. Call Service     4. Logic      5. Rules    6. Entity Mapping
+4. Return Response  5. Orchestrate 6. Validate 7. Data Persistence
+```
+
+### 🎯 **Benefits of This Architecture**
+
+#### **Maintainability**
+- **Separation of Concerns**: Each layer has a single responsibility
+- **Loose Coupling**: Dependencies point inward, enabling easy changes
+- **Clear Boundaries**: Well-defined interfaces between layers
+
+#### **Testability**  
+- **Unit Testing**: Domain logic tested without external dependencies
+- **Mocking**: Repository interfaces easily mocked for testing
+- **Integration Testing**: Each layer can be tested independently
+
+#### **Scalability**
+- **Plugin Architecture**: Easy to add new features without affecting existing code
+- **Technology Independence**: Can switch databases or frameworks without changing business logic
+- **Microservices Ready**: Clear boundaries make it easy to extract services
+
+#### **Business Alignment**
+- **Domain Focus**: Business logic is explicit and central
+- **Ubiquitous Language**: Code reflects business terminology
+- **Business Rule Centralization**: All business rules in domain layer
+
+### 🛠️ **Implementation Patterns**
+
+#### **Repository Pattern**
+- Abstract data access behind interfaces
+- Domain defines contracts, infrastructure implements them
+- Enables testing without database dependencies
+
+#### **Mapper Pattern**  
+- Converts between domain models and database entities
+- Keeps domain pure from persistence concerns
+- Enables different persistence strategies
+
+#### **Dependency Injection**
+- Dependencies injected from outer layers
+- Follows dependency inversion principle
+- Enables easy testing and flexibility
+
+#### **DTO Pattern**
+- Defines data contracts for API communication
+- Separates internal models from external representation
+- Enables API versioning and evolution
+
+### 💡 **Real-World Architecture Benefits**
+
+#### **Example 1: Changing Database Technology**
+```python
+# ❌ Without Clean Architecture: Database logic scattered throughout
+def get_school(school_id: int):
+    # Direct database calls mixed with business logic
+    query = "SELECT * FROM schools WHERE id = ?"
+    result = db.execute(query, school_id)
+    # Business validation mixed with data access
+    if result.established_year < 1800:
+        raise ValueError("Invalid year")
+    return result
+
+# ✅ With Clean Architecture: Easy database changes
+# Domain layer (unchanged when switching databases)
+@dataclass
+class School:
+    def __post_init__(self):
+        if self.established_year < 1800:
+            raise ValueError("Invalid year")
+
+# Infrastructure layer (only this changes when switching DB)
+class SchoolRepository:
+    def get_by_id(self, school_id: int) -> School:
+        # Can switch from PostgreSQL to MongoDB without affecting domain
+        entity = self.session.get(SchoolEntity, school_id)
+        return SchoolMapper.to_domain(entity)
+```
+
+#### **Example 2: Unit Testing Business Logic**
+```python
+# ❌ Without Clean Architecture: Hard to test
+def create_invoice(student_id: int, amount: float):
+    # Requires database connection to test
+    student = db.get_student(student_id)
+    if student.grade_level < 1:
+        raise ValueError("Invalid grade")
+    # Creates database record during test
+    return db.create_invoice(student_id, amount)
+
+# ✅ With Clean Architecture: Easy unit testing
+@dataclass  
+class Invoice:
+    def __post_init__(self):
+        # Pure business logic - no database needed
+        if self.amount <= 0:
+            raise ValueError("Amount must be positive")
+    
+    def calculate_total_with_tax(self, tax_rate: float) -> float:
+        # Pure calculation - easily testable
+        return self.amount * (1 + tax_rate)
+
+# Test (no database required)
+def test_invoice_calculation():
+    invoice = Invoice(amount=100.0, student_id=1)
+    assert invoice.calculate_total_with_tax(0.1) == 110.0
+```
+
+#### **Example 3: Adding New Features**
+```python
+# ✅ Adding email notifications without changing existing code
+
+# 1. Domain layer: Add new business rule (if needed)
+@dataclass
+class Invoice:
+    def mark_as_paid(self) -> None:
+        if self.status == InvoiceStatus.PAID:
+            raise ValueError("Invoice already paid")
+        self.status = InvoiceStatus.PAID
+        # Domain event could be added here
+
+# 2. Application layer: Add notification use case
+class InvoiceService:
+    def __init__(self, repo: InvoiceRepository, notifier: EmailNotifier):
+        self.repo = repo
+        self.notifier = notifier
+    
+    async def mark_invoice_paid(self, invoice_id: int):
+        invoice = await self.repo.get_by_id(invoice_id)
+        invoice.mark_as_paid()  # Domain business rule
+        await self.repo.update(invoice)
+        await self.notifier.send_payment_confirmation(invoice)  # New feature
+
+# 3. Infrastructure layer: Add email implementation
+class EmailNotifier:
+    async def send_payment_confirmation(self, invoice: Invoice):
+        # Email sending logic
+        pass
+
+# 4. Presentation layer: No changes needed!
+# Existing API endpoints automatically support the new feature
+```
+
+#### **Example 4: API Versioning**
+```python
+# ✅ Supporting multiple API versions with same business logic
+
+# Domain layer: Unchanged
+@dataclass
+class School:
+    name: str
+    address: str
+    # Business logic stays the same
+
+# Application layer: Unchanged  
+class SchoolService:
+    async def create_school(self, school: School) -> School:
+        # Business operations stay the same
+        return await self.repo.create(school)
+
+# Presentation layer: Different DTOs per version
+# V1 API
+class SchoolCreateDTOV1(BaseModel):
+    name: str
+    address: str
+
+# V2 API (with additional fields)
+class SchoolCreateDTOV2(BaseModel):
+    name: str
+    address: str
+    principal_email: str  # New field
+    
+# Both versions use the same service layer!
+```
+
+### 🔍 **Code Organization Example**
+
+Here's how a complete feature flows through the architecture:
+
+```python
+# 1. 🎯 DOMAIN LAYER - Pure business logic
+@dataclass
+class Student:
+    name: str
+    grade_level: int
+    school_id: int
+    
+    def __post_init__(self):
+        if not self.name.strip():
+            raise ValueError("Name is required")
+        if self.grade_level < 1 or self.grade_level > 12:
+            raise ValueError("Grade must be 1-12")
+    
+    def promote_to_next_grade(self) -> None:
+        if self.grade_level >= 12:
+            raise ValueError("Cannot promote beyond grade 12")
+        self.grade_level += 1
+
+# 2. 🔧 APPLICATION LAYER - Use cases
+class StudentService:
+    def __init__(self, student_repo: StudentRepository, school_repo: SchoolRepository):
+        self.student_repo = student_repo
+        self.school_repo = school_repo
+    
+    async def enroll_student(self, student_data: StudentCreateDTO) -> Student:
+        # Validate school exists
+        school = await self.school_repo.get_by_id(student_data.school_id)
+        if not school:
+            raise ValueError("School not found")
+        
+        # Create domain object (triggers validation)
+        student = Student(
+            name=student_data.name,
+            grade_level=student_data.grade_level,
+            school_id=student_data.school_id
+        )
+        
+        # Persist through repository
+        return await self.student_repo.create(student)
+
+# 3. 🏗️ INFRASTRUCTURE LAYER - Database implementation
+class StudentRepository(StudentRepositoryInterface):
+    def __init__(self, session: Session):
+        self.session = session
+    
+    async def create(self, student: Student) -> Student:
+        # Convert domain to database entity
+        entity = StudentMapper.to_entity(student)
+        
+        # Database operations
+        self.session.add(entity)
+        self.session.commit()
+        self.session.refresh(entity)
+        
+        # Convert back to domain
+        return StudentMapper.to_domain(entity)
+
+# 4. 🎨 PRESENTATION LAYER - API interface
+@router.post("/students/", response_model=StudentResponseDTO)
+async def create_student(
+    student_data: StudentCreateDTO,
+    service: StudentService = Depends(get_student_service),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new student"""
+    student = await service.enroll_student(student_data)
+    return StudentResponseDTO.from_domain(student)
 ```
 
 ## 🚀 Quick Start
@@ -386,35 +848,4 @@ python setup_env.py status   # Show current configuration
 python run_tests.py domain    # Run domain tests
 python run_tests.py coverage  # Run with coverage
 python run_tests.py specific --test-path tests/unit/domain/test_school_model.py
-```
-
-## 🏗️ Project Structure
-
-```
-mattilda-test/
-├── app/
-│   ├── core/                 # Configuration and utilities
-│   ├── domain/              # Domain models and business logic
-│   │   ├── models/          # Domain entities
-│   │   ├── repositories/    # Repository interfaces
-│   │   └── enums.py         # Domain enums
-│   ├── application/         # Application layer
-│   │   ├── dtos/           # Data transfer objects
-│   │   └── services/       # Application services
-│   ├── infrastructure/      # Infrastructure layer
-│   │   ├── database/       # Database connection
-│   │   ├── persistence/    # Database entities
-│   │   ├── repositories/   # Repository implementations
-│   │   └── mappers/        # Domain/Entity mappers
-│   └── presentation/        # Presentation layer
-│       └── api/v1/         # API controllers
-├── tests/
-│   └── unit/domain/        # Domain model tests
-├── docker/                 # Docker configuration
-├── Dockerfile             # Development container
-├── Dockerfile.prod        # Production container
-├── docker-compose.yml     # Development orchestration
-├── docker-compose.prod.yml # Production orchestration
-├── Makefile              # Convenience commands
-└── requirements.txt      # Python dependencies
 ```
