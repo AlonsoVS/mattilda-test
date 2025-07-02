@@ -1,11 +1,13 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session
+from datetime import date
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.school_repository import SchoolRepository
 from app.infrastructure.repositories.student_repository import StudentRepository
+from app.infrastructure.repositories.invoice_repository import InvoiceRepository
 from app.application.services.school_service import SchoolService
-from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO, SchoolFilterDTO
+from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO, SchoolFilterDTO, SchoolAccountStatementDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
 
 router = APIRouter(prefix="/schools", tags=["schools"])
@@ -15,7 +17,8 @@ def get_school_service(session: Session = Depends(get_session)) -> SchoolService
     """Dependency to get school service"""
     school_repository = SchoolRepository(session)
     student_repository = StudentRepository(session)
-    return SchoolService(school_repository, student_repository)
+    invoice_repository = InvoiceRepository(session)
+    return SchoolService(school_repository, student_repository, invoice_repository)
 
 
 @router.get("/", response_model=PaginatedResponse[SchoolResponseDTO])
@@ -97,3 +100,22 @@ async def delete_school(
     if not success:
         raise HTTPException(status_code=404, detail="School not found")
     return {"message": "School deleted successfully"}
+
+
+@router.get("/{school_id}/account-statement", response_model=SchoolAccountStatementDTO)
+async def get_school_account_statement(
+    school_id: int,
+    date_from: Optional[date] = Query(None, description="Statement period start date (defaults to beginning of current year)"),
+    date_to: Optional[date] = Query(None, description="Statement period end date (defaults to today)"),
+    school_service: SchoolService = Depends(get_school_service)
+):
+    """Get comprehensive account statement for a school including all students' financial data, totals, and statistics"""
+    try:
+        statement = await school_service.get_school_account_statement(school_id, date_from, date_to)
+        if not statement:
+            raise HTTPException(status_code=404, detail="School not found")
+        return statement
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating school account statement: {str(e)}")
