@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 
 
@@ -58,6 +58,55 @@ class StudentResponseDTO(BaseModel):
     enrollment_date: date
     address: str
     is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceSummaryDTO(BaseModel):
+    """DTO for invoice summary in account statement"""
+    id: int
+    invoice_number: str
+    description: str
+    invoice_date: date
+    due_date: date
+    amount: float
+    tax_amount: float
+    total_amount: float
+    status: str
+    payment_date: Optional[date] = None
+    payment_method: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class StudentAccountStatementDTO(BaseModel):
+    """DTO for student account statement"""
+    student_id: int
+    student_name: str
+    school_name: str
+    statement_period_from: date
+    statement_period_to: date
+    
+    # Financial summary
+    total_charges: float
+    total_payments: float
+    current_balance: float
+    
+    # Detailed breakdown
+    pending_invoices: List[InvoiceSummaryDTO]
+    paid_invoices: List[InvoiceSummaryDTO]
+    overdue_invoices: List[InvoiceSummaryDTO]
+    
+    # Account statistics
+    total_invoices: int
+    pending_amount: float
+    paid_amount: float
+    overdue_amount: float
+    
+    # Generated timestamp
+    generated_at: date
 
     class Config:
         from_attributes = True

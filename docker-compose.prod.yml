@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: mattilda_db_prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-mattilda_db}
+      POSTGRES_USER: ${DATABASE_USER:-mattilda_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - mattilda_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-mattilda_user} -d ${DATABASE_NAME:-mattilda_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # FastAPI Backend Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: mattilda_backend_prod
+    restart: always
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mattilda_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mattilda_network:
+    driver: bridge
