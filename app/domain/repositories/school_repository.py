@@ -12,6 +12,11 @@ class SchoolRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_with_filters(self, filters: dict, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
+        """Get schools with flexible filtering and pagination"""
+        pass
+
+    @abstractmethod
     async def get_by_id(self, school_id: int) -> Optional[School]:
         """Get school by ID"""
         pass
@@ -31,12 +36,4 @@ class SchoolRepositoryInterface(ABC):
         """Delete a school"""
         pass
 
-    @abstractmethod
-    async def get_by_city(self, city: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
-        """Get schools by city with pagination"""
-        pass
 
-    @abstractmethod
-    async def get_by_state(self, state: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
-        """Get schools by state with pagination"""
-        pass

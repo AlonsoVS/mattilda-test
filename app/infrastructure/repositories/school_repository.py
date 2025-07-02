@@ -68,33 +68,56 @@ class SchoolRepository(SchoolRepositoryInterface):
             return True
         return False
 
-    async def get_by_city(self, city: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
-        """Get schools by city with pagination"""
-        city_filter = col(SchoolEntity.city).ilike(f"%{city}%")
-        
-        # Get total count
-        count_statement = select(func.count()).select_from(SchoolEntity).where(city_filter)
-        total = self.session.exec(count_statement).one()
-        
-        # Get paginated results
-        statement = select(SchoolEntity).where(city_filter).offset(offset).limit(limit)
-        result = self.session.exec(statement)
-        entities = list(result.all())
-        
-        # Convert to domain models
-        schools = [SchoolMapper.to_domain(entity) for entity in entities]
-        return schools, total
 
-    async def get_by_state(self, state: str, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
-        """Get schools by state with pagination"""
-        state_filter = col(SchoolEntity.state).ilike(f"%{state}%")
+
+    async def get_with_filters(self, filters: dict, offset: int = 0, limit: int = 10) -> Tuple[List[School], int]:
+        """Get schools with flexible filtering and pagination"""
+        # Build the base query
+        statement = select(SchoolEntity)
+        count_statement = select(func.count()).select_from(SchoolEntity)
+        
+        # Apply filters
+        conditions = []
+        
+        if filters.get('name'):
+            conditions.append(col(SchoolEntity.name).ilike(f"%{filters['name']}%"))
+        
+        if filters.get('address'):
+            conditions.append(col(SchoolEntity.address).ilike(f"%{filters['address']}%"))
+        
+        if filters.get('city'):
+            conditions.append(col(SchoolEntity.city).ilike(f"%{filters['city']}%"))
+        
+        if filters.get('state'):
+            conditions.append(col(SchoolEntity.state).ilike(f"%{filters['state']}%"))
+        
+        if filters.get('zip_code'):
+            conditions.append(col(SchoolEntity.zip_code).ilike(f"%{filters['zip_code']}%"))
+        
+        if filters.get('phone'):
+            conditions.append(col(SchoolEntity.phone_number).ilike(f"%{filters['phone']}%"))
+        
+        if filters.get('email'):
+            conditions.append(col(SchoolEntity.email).ilike(f"%{filters['email']}%"))
+        
+        if filters.get('principal'):
+            conditions.append(col(SchoolEntity.principal_name).ilike(f"%{filters['principal']}%"))
+        
+        if filters.get('is_active') is not None:
+            conditions.append(SchoolEntity.is_active == filters['is_active'])
+        
+        # Apply conditions to both statements
+        if conditions:
+            from sqlmodel import and_
+            filter_condition = and_(*conditions)
+            statement = statement.where(filter_condition)
+            count_statement = count_statement.where(filter_condition)
         
         # Get total count
-        count_statement = select(func.count()).select_from(SchoolEntity).where(state_filter)
         total = self.session.exec(count_statement).one()
         
         # Get paginated results
-        statement = select(SchoolEntity).where(state_filter).offset(offset).limit(limit)
+        statement = statement.offset(offset).limit(limit)
         result = self.session.exec(statement)
         entities = list(result.all())
         

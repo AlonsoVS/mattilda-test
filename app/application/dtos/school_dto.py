@@ -3,6 +3,19 @@ from typing import Optional
 from datetime import date
 
 
+class SchoolFilterDTO(BaseModel):
+    """DTO for filtering schools"""
+    name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    principal: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class SchoolCreateDTO(BaseModel):
     """DTO for creating a school"""
     name: str

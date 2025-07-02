@@ -2,7 +2,7 @@ from typing import List, Optional
 from app.domain.models.school import School
 from app.domain.repositories.school_repository import SchoolRepositoryInterface
 from app.domain.repositories.student_repository import StudentRepositoryInterface
-from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO
+from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO, SchoolFilterDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
 from datetime import datetime
 
@@ -17,6 +17,18 @@ class SchoolService:
     async def get_all_schools(self, pagination: PaginationParams) -> PaginatedResponse[SchoolResponseDTO]:
         """Get all schools with pagination"""
         schools, total = await self.school_repository.get_all(pagination.offset, pagination.limit)
+        school_dtos = []
+        for school in schools:
+            dto = await self._to_response_dto(school)
+            school_dtos.append(dto)
+        return PaginatedResponse.create(school_dtos, total, pagination)
+
+    async def get_schools_with_filters(self, filters: SchoolFilterDTO, pagination: PaginationParams) -> PaginatedResponse[SchoolResponseDTO]:
+        """Get schools with flexible filtering and pagination"""
+        # Convert DTO to dict, excluding None values
+        filter_dict = {k: v for k, v in filters.model_dump().items() if v is not None}
+        
+        schools, total = await self.school_repository.get_with_filters(filter_dict, pagination.offset, pagination.limit)
         school_dtos = []
         for school in schools:
             dto = await self._to_response_dto(school)
@@ -84,23 +96,7 @@ class SchoolService:
         """Delete a school"""
         return await self.school_repository.delete(school_id)
 
-    async def get_schools_by_city(self, city: str, pagination: PaginationParams) -> PaginatedResponse[SchoolResponseDTO]:
-        """Get schools by city with pagination"""
-        schools, total = await self.school_repository.get_by_city(city, pagination.offset, pagination.limit)
-        school_dtos = []
-        for school in schools:
-            dto = await self._to_response_dto(school)
-            school_dtos.append(dto)
-        return PaginatedResponse.create(school_dtos, total, pagination)
 
-    async def get_schools_by_state(self, state: str, pagination: PaginationParams) -> PaginatedResponse[SchoolResponseDTO]:
-        """Get schools by state with pagination"""
-        schools, total = await self.school_repository.get_by_state(state, pagination.offset, pagination.limit)
-        school_dtos = []
-        for school in schools:
-            dto = await self._to_response_dto(school)
-            school_dtos.append(dto)
-        return PaginatedResponse.create(school_dtos, total, pagination)
 
     async def _to_response_dto(self, school: School) -> SchoolResponseDTO:
         """Convert domain model to response DTO"""
