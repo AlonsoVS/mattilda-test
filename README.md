@@ -1,4 +1,4 @@
-# Mattilda - School Management System
+# Mattilda Test Project
 
 A modern school management system built with FastAPI, PostgreSQL, and clean architecture principles.
 
