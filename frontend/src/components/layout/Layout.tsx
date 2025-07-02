@@ -99,7 +99,7 @@ const Layout: React.FC = () => {
             School Management System
           </Typography>
           <Typography variant="body1" sx={{ mr: 2 }}>
-            Welcome, {user.name}
+            Welcome, {user.full_name}
           </Typography>
           <Button color="inherit" onClick={handleLogout} startIcon={<Logout />}>
             Logout
