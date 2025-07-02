@@ -139,5 +139,20 @@ dmypy.json
 *.db
 *.sqlite
 
+# Environment variables
+.env.local.custom
+.env.docker.custom
+.env.prod.custom
+.env.*.local
+.env.*.custom
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Database backups
+backups/
+
 # Logs
+logs/
 *.log

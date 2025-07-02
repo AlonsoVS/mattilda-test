@@ -34,6 +34,11 @@ def create_app() -> FastAPI:
     # Include API routes
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint for Docker health checks"""
+        return {"status": "healthy", "service": "mattilda-backend"}
+
     return app
 
 
