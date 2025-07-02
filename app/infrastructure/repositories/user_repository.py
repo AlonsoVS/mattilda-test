@@ -6,7 +6,9 @@ from typing import Optional, List
 from sqlmodel import Session, select
 from datetime import datetime
 from app.domain.repositories.user_repository import UserRepositoryInterface
-from app.domain.models.user import User, UserEntity
+from app.domain.models.user import User
+from app.infrastructure.persistence.user_entity import UserEntity
+from app.infrastructure.mappers.user_mapper import UserMapper
 
 
 class UserRepository(UserRepositoryInterface):
@@ -17,45 +19,37 @@ class UserRepository(UserRepositoryInterface):
     
     async def create(self, user: User, hashed_password: str) -> User:
         """Create a new user."""
-        user_entity = UserEntity(
-            username=user.username,
-            email=user.email,
-            hashed_password=hashed_password,
-            full_name=user.full_name,
-            is_active=user.is_active,
-            is_superuser=user.is_superuser,
-            created_at=datetime.utcnow()
-        )
+        user_entity = UserMapper.to_entity(user, hashed_password)
         
         self.session.add(user_entity)
         self.session.commit()
         self.session.refresh(user_entity)
         
-        return self._entity_to_model(user_entity)
+        return UserMapper.to_domain(user_entity)
     
     async def get_by_id(self, user_id: int) -> Optional[User]:
         """Get user by ID."""
         statement = select(UserEntity).where(UserEntity.id == user_id)
         result = self.session.exec(statement).first()
-        return self._entity_to_model(result) if result else None
+        return UserMapper.to_domain(result) if result else None
     
     async def get_by_username(self, username: str) -> Optional[User]:
         """Get user by username."""
         statement = select(UserEntity).where(UserEntity.username == username)
         result = self.session.exec(statement).first()
-        return self._entity_to_model(result) if result else None
+        return UserMapper.to_domain(result) if result else None
     
     async def get_by_email(self, email: str) -> Optional[User]:
         """Get user by email."""
         statement = select(UserEntity).where(UserEntity.email == email)
         result = self.session.exec(statement).first()
-        return self._entity_to_model(result) if result else None
+        return UserMapper.to_domain(result) if result else None
     
     async def list_all(self) -> List[User]:
         """Get all users."""
         statement = select(UserEntity)
         results = self.session.exec(statement).all()
-        return [self._entity_to_model(entity) for entity in results]
+        return [UserMapper.to_domain(entity) for entity in results]
     
     async def update(self, user_id: int, updates: dict) -> Optional[User]:
         """Update user information."""
@@ -70,11 +64,11 @@ class UserRepository(UserRepositoryInterface):
             if hasattr(user_entity, field) and value is not None:
                 setattr(user_entity, field, value)
         
-        user_entity.updated_at = datetime.utcnow()
+        user_entity.updated_at = datetime.now()
         self.session.commit()
         self.session.refresh(user_entity)
         
-        return self._entity_to_model(user_entity)
+        return UserMapper.to_domain(user_entity)
     
     async def delete(self, user_id: int) -> bool:
         """Delete user."""
@@ -103,19 +97,6 @@ class UserRepository(UserRepositoryInterface):
             return False
         
         user_entity.hashed_password = hashed_password
-        user_entity.updated_at = datetime.utcnow()
+        user_entity.updated_at = datetime.now()
         self.session.commit()
         return True
-    
-    def _entity_to_model(self, entity: UserEntity) -> User:
-        """Convert UserEntity to User model."""
-        return User(
-            id=entity.id,
-            username=entity.username,
-            email=entity.email,
-            full_name=entity.full_name,
-            is_active=entity.is_active,
-            is_superuser=entity.is_superuser,
-            created_at=entity.created_at,
-            updated_at=entity.updated_at
-        )

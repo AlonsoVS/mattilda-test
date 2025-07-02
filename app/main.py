@@ -9,6 +9,7 @@ from app.presentation.api.v1.api import api_router
 from app.infrastructure.persistence.school_entity import SchoolEntity
 from app.infrastructure.persistence.student_entity import StudentEntity
 from app.infrastructure.persistence.invoice_entity import InvoiceEntity
+from app.infrastructure.persistence.user_entity import UserEntity
 
 
 @asynccontextmanager
