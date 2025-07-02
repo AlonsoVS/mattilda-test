@@ -33,7 +33,6 @@ const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  console.log('User:', user);
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
