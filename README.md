@@ -1,420 +1,243 @@
-# Mattilda Test Project
+# Mattilda Test Project - School Management System
 
-A modern school management system built with FastAPI, PostgreSQL, and clean architecture principles.
-
-## 🏗️ Architecture
-
-This project follows **Domain-Driven Design (DDD)** and **Clean Architecture** principles:
-
-```
-app/
-├── core/           # Application configuration and shared utilities
-├── domain/         # Business logic and domain models
-├── application/    # Application services and DTOs
-├── infrastructure/ # External concerns (database, persistence)
-└── presentation/   # API controllers and routes
-```
+A modern, full-stack school management system built with FastAPI and React.
 
 ## 🚀 Quick Start
 
-### Choose Development Environment
-
-This project supports three different development environments:
-
-#### 🏠 **Local Development** (without Docker)
-```bash
-# Requires local PostgreSQL installation
-# Use .env configuration
-
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Set up local environment (optional helper)
-python setup_env.py
-
-# 3. Run the application
-make local
-# OR
-uvicorn app.main:app --reload
-```
-
-#### 🐳 **Docker Development** 
-```bash
-# Complete containerized environment
-# Use .env.docker configuration
-
-# Start development environment
-make dev
-
-# Access the application
-# - API: http://localhost:8000
-# - Docs: http://localhost:8000/docs
-# - pgAdmin: http://localhost:5050 (admin@mattilda.com / admin123)
-
-# Test with default admin user
-# Login at http://localhost:8000/docs with: admin / admin123
-```
-
-#### 🚀 **Docker Production**
-```bash
-# Production-ready deployment
-# Use .env.prod configuration
-
-# 1. Configure production environment
-# Edit .env.prod with secure values
-
-# 2. Deploy
-make prod
-```
-
-## 📊 Features
-
-### Core Entities
-- **Schools**: Complete school management with address, contact info, and principal details
-- **Students**: Student records with enrollment, grade levels, and contact information  
-- **Invoices**: Billing system with payment tracking and status management
-
-### API Capabilities
-- **CRUD Operations**: Full Create, Read, Update, Delete for all entities
-- **Advanced Filtering**: Filter by any field with partial matching
-- **Pagination**: Configurable page size and navigation
-- **Validation**: Comprehensive business rule validation
-- **Type Safety**: Full type hints and Pydantic models
-
-### Filtering Examples
-```bash
-# Filter schools by state and city
-GET /api/v1/schools/?state=CA&city=Los%20Angeles&page=1&size=10
-
-# Filter students by grade and school
-GET /api/v1/students/?grade_level=10&school_id=1&is_active=true
-
-# Filter invoices by status and date range
-GET /api/v1/invoices/?status=pending&amount_min=100&amount_max=1000
-```
-
-## 🛠️ Development
-
-### Local Development (Docker)
-```bash
-# Start development environment
-make dev
-
-# View logs
-make logs-backend
-
-# Run tests
-make test
-
-# Open backend shell
-make shell
-
-# Open database shell  
-make db-shell
-```
-
-### Local Development (Native)
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment
-cp .env.example .env
-# Edit .env with your database settings
-
-# Run the application
-uvicorn app.main:app --reload
-
-# Run tests
-python run_tests.py domain --verbose
-```
-
-## 🐘 Database
-
-### Schema
-- **schools**: School information and metadata
-- **students**: Student records linked to schools
-- **invoices**: Billing records linked to students and schools
-
-### Management
-```bash
-# Access database shell
-make db-shell
-
-# Start pgAdmin for GUI management
-make pgadmin
-
-# Create backup
-make backup
-
-# Restore from backup
-make restore BACKUP_FILE=backups/backup_20240101_120000.sql
-```
-
-## 🧪 Testing
-
-### Unit Tests (72 total tests)
-- **Domain Models**: Complete business logic validation
-- **Test Coverage**: 100% coverage of domain layer
-- **Test Categories**: Validation, business methods, boundary values
+The easiest way to get started is using the included Makefile:
 
 ```bash
-# Run all domain tests
-make test
-# OR
-python run_tests.py domain --verbose
+# Start the complete development environment
+make start
 
-# Run specific test file
-pytest tests/unit/domain/test_school_model.py -v
-
-# Run with coverage
-python run_tests.py coverage
-```
-
-### 🔐 Testing with Default Admin User
-
-The system automatically creates a default admin user for testing and development:
-
-#### Default Admin Credentials
-- **Username**: `admin`
-- **Password**: `admin123` (development), see env files for other environments
-- **Email**: `admin@example.com` (development)
-- **Role**: Superuser (access to all admin endpoints)
-
-#### Quick Admin Testing
-
-**1. Start the development environment:**
-```bash
-make dev
-```
-
-**2. Login and get access token:**
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/login" \
-     -H "Content-Type: application/json" \
-     -d '{"username": "admin", "password": "admin123"}'
-```
-
-**3. Test admin endpoints with the token:**
-```bash
-# Get current user info
-curl -X GET "http://localhost:8000/api/v1/auth/me" \
-     -H "Authorization: Bearer ACCESS_TOKEN"
-
-# List all users (admin only)
-curl -X GET "http://localhost:8000/api/v1/auth/users" \
-     -H "Authorization: Bearer ACCESS_TOKEN"
-
-# Cache management (admin only)
-curl -X GET "http://localhost:8000/api/v1/cache/stats" \
-     -H "Authorization: Bearer ACCESS_TOKEN"
-```
-
-#### Using Interactive API Documentation
-1. Open http://localhost:8000/docs
-2. Click **"Authorize"** button (top right)
-3. Login with `admin` / `admin123`
-4. Test any endpoint directly in the browser
-
-#### Available Admin Endpoints
-| Method | Endpoint | Description | Auth Level |
-|--------|----------|-------------|------------|
-| `GET` | `/api/v1/auth/users` | List all users | Superuser |
-| `GET` | `/api/v1/auth/users/{id}` | Get user by ID | Superuser |
-| `GET` | `/api/v1/cache/stats` | Cache statistics | Superuser |
-| `DELETE` | `/api/v1/cache/clear` | Clear all caches | Superuser |
-| `GET` | `/api/v1/cache/health` | Cache health check | Superuser |
-
-## 🚀 Production Deployment
-
-### 1. Prepare Environment
-```bash
-# Copy and configure production environment
-cp .env.prod.example .env.prod
-
-# Edit .env.prod with secure production values:
-# - Strong DATABASE_PASSWORD
-# - Secure SECRET_KEY (32+ chars)
-# - Proper ALLOWED_ORIGINS
-# - Production database settings
-```
-
-### 2. Deploy
-```bash
-# Start production environment
-make prod
-
-# OR manually
-docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
-```
-
-### 3. Verify Deployment
-```bash
-# Check health
-curl https://yourdomain.com/health
-
-# Monitor services
+# Check service status
 make status
+
+# View all available commands
+make help
+```
+
+## Project Structure
+
+This project is organized as a monorepo with separate frontend and backend applications:
+
+```
+mattilda-test/
+├── backend/          # FastAPI backend application
+├── frontend/         # React frontend application
+├── docker-compose.yml # Docker Compose configuration
+├── Makefile          # Development commands
+├── start-dev.sh      # Quick start script
+├── DEVELOPMENT.md    # Detailed development guide
+├── .gitignore        # Git ignore rules
+└── README.md         # This file
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Make (for using Makefile commands)
+
+### Development with Docker (Recommended)
+
+The fastest way to get up and running:
+
+```bash
+# Start everything (database, backend, frontend)
+make start
+
+# Check that all services are healthy
+make health
+
+# View development URLs and credentials
+make urls
+
+# View logs from all services
 make logs
+
+# Stop everything
+make stop
 ```
 
-## 📖 API Documentation
+### Available Makefile Commands
 
-### Endpoints
-
-#### Schools
-- `GET /api/v1/schools/` - List schools with filtering
-- `POST /api/v1/schools/` - Create new school
-- `GET /api/v1/schools/{id}` - Get school by ID
-- `PUT /api/v1/schools/{id}` - Update school
-- `DELETE /api/v1/schools/{id}` - Delete school
-
-#### Students  
-- `GET /api/v1/students/` - List students with filtering
-- `POST /api/v1/students/` - Create new student
-- `GET /api/v1/students/{id}` - Get student by ID
-- `PUT /api/v1/students/{id}` - Update student
-- `DELETE /api/v1/students/{id}` - Delete student
-
-#### Invoices
-- `GET /api/v1/invoices/` - List invoices with filtering
-- `POST /api/v1/invoices/` - Create new invoice
-- `GET /api/v1/invoices/{id}` - Get invoice by ID
-- `PUT /api/v1/invoices/{id}` - Update invoice
-- `DELETE /api/v1/invoices/{id}` - Delete invoice
-
-### Interactive Documentation
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## 🔧 Configuration
-
-### Environment Files
-
-The project uses different environment files for different scenarios:
-
-- **`.env`** - Default environment
-- **`.env.docker`** - Docker development environment  
-- **`.env.prod`** - Docker production environment
-
-#### Local Development (.env)
 ```bash
-DATABASE_URL=postgresql://postgres:password@localhost:5432/mattilda_db
-ENVIRONMENT=development
-DEBUG=true
-APP_HOST=127.0.0.1
-APP_PORT=8000
+# Environment Management
+make start              # Start full development environment
+make stop               # Stop all services
+make restart            # Restart all services
+make status             # Show service status
+make health             # Check service health
+
+# Development
+make build              # Build Docker images
+make rebuild            # Rebuild without cache
+make clean              # Clean up Docker resources
+make reset              # Full reset (destructive)
+
+# Logs and Monitoring
+make logs               # All service logs
+make logs-backend       # Backend logs only
+make logs-frontend      # Frontend logs only
+make logs-db            # Database logs only
+
+# Shell Access
+make shell              # Backend container shell
+make shell-frontend     # Frontend container shell
+make shell-db           # PostgreSQL shell
+
+# Testing and Quality
+make test               # Run backend tests
+make lint               # Run code linting
+make format             # Format code
+
+# Database Operations
+make backup             # Create database backup
+make db-reset           # Reset database with sample data
+
+# Utilities
+make urls               # Show development URLs
+make info               # Project information
+make help               # Show all commands
 ```
 
-#### Docker Development (.env.docker)
+### Manual Development
+
+For manual setup without Docker:
+
+### Backend Development
+
+The backend is a FastAPI application with a clean architecture following Domain-Driven Design (DDD) principles.
+
 ```bash
-DATABASE_URL=postgresql://mattilda_user:mattilda_password@db:5432/mattilda_db
-ENVIRONMENT=development
-DEBUG=true
-APP_HOST=0.0.0.0
-APP_PORT=8000
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-#### Docker Production (.env.prod)
+See [backend/README.md](backend/README.md) for detailed backend documentation.
+
+### Frontend Development
+
+The frontend is a React application built with modern tools and best practices.
+
 ```bash
-DATABASE_URL=postgresql://prod_user:SECURE_PASSWORD@db:5432/mattilda_prod
-ENVIRONMENT=production
-DEBUG=false
-SECRET_KEY=VERY_LONG_SECURE_KEY_32_PLUS_CHARACTERS
-ALLOWED_ORIGINS=https://yourdomain.com
+cd frontend
+npm install
+npm start
+```
+
+See [frontend/README.md](frontend/README.md) for detailed frontend documentation.
+
+## Architecture Overview
+
+### Backend (FastAPI)
+- **Clean Architecture** with Domain-Driven Design
+- **Layered Structure**: Presentation → Application → Domain → Infrastructure
+- **Authentication & Authorization** with JWT tokens
+- **Database**: SQLite with SQLModel ORM
+- **API Documentation**: Automatic OpenAPI/Swagger docs
+- **Testing**: Comprehensive unit and integration tests
+
+### Frontend (React)
+- **Modern React** with functional components and hooks
+- **TypeScript** for type safety
+- **State Management**: Context API or Redux Toolkit
+- **UI Components**: Material-UI or Tailwind CSS
+- **API Client**: Axios with automatic error handling
+- **Authentication**: JWT token management
+
+## Features
+
+- 👥 **User Management**: Registration, authentication, role-based access
+- 🏫 **School Management**: Multiple schools, grades, and classes
+- 👨‍🎓 **Student Management**: Student profiles, enrollment, and tracking
+- 📄 **Invoice Management**: Billing, payments, and financial tracking
+- 📊 **Reports & Analytics**: Student performance and financial reports
+- 🔍 **Advanced Filtering**: Pagination and search across all entities
+- 🔐 **Security**: JWT authentication, role-based permissions
+- 📱 **Responsive Design**: Mobile-friendly interface
+- 🐳 **Docker Support**: Containerized deployment
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/refresh` - Token refresh
+- `GET /auth/me` - Current user profile
+- `GET /auth/users` - List users (admin, with pagination/filtering)
+
+### Students
+- `GET /students` - List students (with pagination/filtering)
+- `POST /students` - Create student
+- `GET /students/{id}` - Get student details
+- `PUT /students/{id}` - Update student
+- `DELETE /students/{id}` - Delete student
+- `GET /students/{id}/account-statement` - Student account statement
+
+### Schools & Invoices
+- Full CRUD operations for schools and invoices
+- Advanced filtering and pagination support
+
+## Development
+
+### Running with Docker
+
+```bash
+# Start the full stack
+docker-compose up -d
+
+# Backend only
+docker-compose up backend
+
+# Frontend only
+docker-compose up frontend
+```
+
+### Running Tests
+
+```bash
+# Backend tests
+cd backend
+python -m pytest
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+## Deployment
+
+### Production Deployment
+
+```bash
+# Build and deploy with Docker
+docker-compose -f backend/docker-compose.prod.yml up -d
 ```
 
 ### Environment Variables
 
-#### Database
-- `DATABASE_URL` - PostgreSQL connection string
-- `DATABASE_HOST` - Database host
-- `DATABASE_PORT` - Database port (default: 5432)
-- `DATABASE_NAME` - Database name
-- `DATABASE_USER` - Database username
-- `DATABASE_PASSWORD` - Database password
+Copy the example environment files and configure:
+- `.env` - Development environment
+- `.env.docker` - Docker development environment  
+- `.env.prod` - Production environment
 
-#### Application
-- `ENVIRONMENT` - Environment mode (development/production)
-- `DEBUG` - Debug mode (true/false)
-- `SECRET_KEY` - JWT signing key
-- `ACCESS_TOKEN_EXPIRE_MINUTES` - JWT token expiration in minutes
-- `ALLOWED_ORIGINS` - CORS allowed origins
-- `APP_HOST` - Application host (127.0.0.1 for local, 0.0.0.0 for Docker)
-- `APP_PORT` - Application port (default: 8000)
+## Contributing
 
-#### Default Admin User
-- `ADMIN_USERNAME` - Default admin username (default: admin)
-- `ADMIN_EMAIL` - Default admin email
-- `ADMIN_PASSWORD` - Default admin password
-- `ADMIN_FULL_NAME` - Default admin display name
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
-## 📋 Available Commands
+## License
 
-### Docker Commands (via Makefile)
-```bash
-make local       # Run locally without Docker
-make dev         # Start Docker development environment
-make prod        # Start Docker production environment  
-make build       # Build Docker images
-make up          # Start services
-make down        # Stop services
-make restart     # Restart services
-make logs        # Show all logs
-make logs-backend # Show backend logs
-make logs-db     # Show database logs
-make clean       # Clean up everything
-make test        # Run tests
-make shell       # Open backend shell
-make db-shell    # Open database shell
-make pgadmin     # Start pgAdmin
-make status      # Check service status
-make backup      # Create database backup
-make restore     # Restore database
-```
+This project is licensed under the MIT License.
 
-### Environment Commands
-```bash
-python setup_env.py          # Interactive environment setup
-python setup_env.py info     # Show environment information
-python setup_env.py check    # Check environment files
-python setup_env.py status   # Show current configuration
-```
+## Support
 
-### Test Commands
-```bash
-python run_tests.py domain    # Run domain tests
-python run_tests.py coverage  # Run with coverage
-python run_tests.py specific --test-path tests/unit/domain/test_school_model.py
-```
-
-## 🏗️ Project Structure
-
-```
-mattilda-test/
-├── app/
-│   ├── core/                 # Configuration and utilities
-│   ├── domain/              # Domain models and business logic
-│   │   ├── models/          # Domain entities
-│   │   ├── repositories/    # Repository interfaces
-│   │   └── enums.py         # Domain enums
-│   ├── application/         # Application layer
-│   │   ├── dtos/           # Data transfer objects
-│   │   └── services/       # Application services
-│   ├── infrastructure/      # Infrastructure layer
-│   │   ├── database/       # Database connection
-│   │   ├── persistence/    # Database entities
-│   │   ├── repositories/   # Repository implementations
-│   │   └── mappers/        # Domain/Entity mappers
-│   └── presentation/        # Presentation layer
-│       └── api/v1/         # API controllers
-├── tests/
-│   └── unit/domain/        # Domain model tests
-├── docker/                 # Docker configuration
-├── Dockerfile             # Development container
-├── Dockerfile.prod        # Production container
-├── docker-compose.yml     # Development orchestration
-├── docker-compose.prod.yml # Production orchestration
-├── Makefile              # Convenience commands
-└── requirements.txt      # Python dependencies
-```
+For questions or support, please open an issue on GitHub.
