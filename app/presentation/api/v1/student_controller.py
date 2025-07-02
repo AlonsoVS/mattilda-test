@@ -4,17 +4,27 @@ from sqlmodel import Session
 from datetime import date
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.student_repository import StudentRepository
+from app.infrastructure.repositories.invoice_repository import InvoiceRepository
+from app.infrastructure.repositories.school_repository import SchoolRepository
 from app.application.services.student_service import StudentService
-from app.application.dtos.student_dto import StudentCreateDTO, StudentUpdateDTO, StudentResponseDTO, StudentFilterDTO
+from app.application.dtos.student_dto import (
+    StudentCreateDTO, 
+    StudentUpdateDTO, 
+    StudentResponseDTO, 
+    StudentFilterDTO,
+    StudentAccountStatementDTO
+)
 from app.core.pagination import PaginationParams, PaginatedResponse
 
 router = APIRouter(prefix="/students", tags=["students"])
 
 
 def get_student_service(session: Session = Depends(get_session)) -> StudentService:
-    """Dependency to get student service"""
+    """Dependency to get student service with all required repositories"""
     student_repository = StudentRepository(session)
-    return StudentService(student_repository)
+    invoice_repository = InvoiceRepository(session)
+    school_repository = SchoolRepository(session)
+    return StudentService(student_repository, invoice_repository, school_repository)
 
 
 @router.get("/", response_model=PaginatedResponse[StudentResponseDTO])
@@ -98,3 +108,22 @@ async def delete_student(
     if not success:
         raise HTTPException(status_code=404, detail="Student not found")
     return {"message": "Student deleted successfully"}
+
+
+@router.get("/{student_id}/account-statement", response_model=StudentAccountStatementDTO)
+async def get_student_account_statement(
+    student_id: int,
+    date_from: Optional[date] = Query(None, description="Statement period start date (defaults to beginning of current year)"),
+    date_to: Optional[date] = Query(None, description="Statement period end date (defaults to today)"),
+    student_service: StudentService = Depends(get_student_service)
+):
+    """Get comprehensive account statement for a student including all invoices, payments, and financial summary"""
+    try:
+        statement = await student_service.get_student_account_statement(student_id, date_from, date_to)
+        if not statement:
+            raise HTTPException(status_code=404, detail="Student not found")
+        return statement
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating account statement: {str(e)}")
