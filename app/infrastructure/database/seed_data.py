@@ -1,15 +1,77 @@
 from datetime import date, datetime
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 from app.infrastructure.database.connection import engine
 from app.infrastructure.persistence.school_entity import SchoolEntity
 from app.infrastructure.persistence.student_entity import StudentEntity
 from app.infrastructure.persistence.invoice_entity import InvoiceEntity
 from app.domain.enums import InvoiceStatus, PaymentMethod
+from app.infrastructure.database.migrations.create_users_table import CREATE_USERS_TABLE
+from app.core.config import settings
+from app.core.auth import get_password_hash
+from app.domain.models.user import User
+from app.infrastructure.repositories.user_repository import UserRepository
 
 
-def seed_data():
+def create_users_table(session: Session):
+    """Create users table if it doesn't exist"""
+    try:
+        # Execute raw SQL using execute()
+        session.execute(text(CREATE_USERS_TABLE))
+        session.commit()
+        print("✅ Users table created successfully")
+    except Exception as e:
+        print(f"❌ Error creating users table: {e}")
+        session.rollback()
+
+
+async def create_default_admin_user(session: Session):
+    """Create default admin user from environment configuration"""
+    try:
+        user_repository = UserRepository(session)
+        
+        # Check if admin user already exists
+        existing_admin = await user_repository.get_by_username(settings.ADMIN_USERNAME)
+        if existing_admin:
+            print(f"✅ Admin user '{settings.ADMIN_USERNAME}' already exists")
+            # Ensure existing user is a superuser
+            if not existing_admin.is_superuser and existing_admin.id:
+                await user_repository.update(existing_admin.id, {"is_superuser": True})
+                print(f"✅ Updated '{settings.ADMIN_USERNAME}' to superuser")
+            return existing_admin
+        
+        # Create new admin user
+        print(f"Creating admin user '{settings.ADMIN_USERNAME}'...")
+        hashed_password = get_password_hash(settings.ADMIN_PASSWORD)
+        admin_user = User(
+            username=settings.ADMIN_USERNAME,
+            email=settings.ADMIN_EMAIL,
+            full_name=settings.ADMIN_FULL_NAME,
+            is_active=True,
+            is_superuser=True
+        )
+        
+        created_user = await user_repository.create(admin_user, hashed_password)
+        print(f"✅ Admin user '{settings.ADMIN_USERNAME}' created successfully")
+        print(f"   Email: {settings.ADMIN_EMAIL}")
+        print(f"   Full Name: {settings.ADMIN_FULL_NAME}")
+        
+        return created_user
+        
+    except Exception as e:
+        print(f"❌ Error creating admin user: {e}")
+        session.rollback()
+        return None
+
+
+async def seed_data():
     """Seed the database with initial data"""
     with Session(engine) as session:
+        # Create users table first
+        create_users_table(session)
+        
+        # Create default admin user
+        await create_default_admin_user(session)
+        
         # Check if data already exists
         existing_schools = session.exec(select(SchoolEntity)).first()
         if existing_schools:
@@ -159,7 +221,15 @@ def seed_data():
         print("Database seeded successfully!")
 
 
+def seed_data_sync():
+    """Synchronous wrapper for seed_data function"""
+    import asyncio
+    asyncio.run(seed_data())
+
+
 if __name__ == "__main__":
+    import asyncio
     from app.infrastructure.database.connection import create_db_and_tables
+    
     create_db_and_tables()
-    seed_data()
+    asyncio.run(seed_data())

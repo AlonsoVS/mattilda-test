@@ -9,6 +9,8 @@ from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO,
 from app.domain.enums import InvoiceStatus, PaymentMethod
 from app.core.pagination import PaginationParams, PaginatedResponse
 from app.core.cache import cache_api_response, invalidate_cache_pattern
+from app.core.dependencies import get_current_active_user, get_current_user_optional
+from app.domain.models.user import User
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -20,7 +22,7 @@ def get_invoice_service(session: Session = Depends(get_session)) -> InvoiceServi
 
 
 @router.get("/", response_model=PaginatedResponse[InvoiceResponseDTO])
-@cache_api_response()  # Re-enabled with simple implementation
+@cache_api_response()
 async def get_invoices(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
@@ -42,9 +44,10 @@ async def get_invoices(
     payment_date_to: Optional[date] = Query(None, description="Filter by payment date to"),
     status: Optional[InvoiceStatus] = Query(None, description="Filter by invoice status"),
     payment_method: Optional[PaymentMethod] = Query(None, description="Filter by payment method"),
+    current_user: User = Depends(get_current_active_user),
     invoice_service: InvoiceService = Depends(get_invoice_service)
 ):
-    """Get invoices with optional filtering and pagination"""
+    """Get invoices with optional filtering and pagination (requires authentication)"""
     pagination = PaginationParams(page=page, size=size)
     
     # Create filter DTO
@@ -77,9 +80,13 @@ async def get_invoices(
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponseDTO)
-@cache_api_response()  # Re-enabled with simple implementation
-async def get_invoice(invoice_id: int, invoice_service: InvoiceService = Depends(get_invoice_service)):
-    """Get an invoice by ID"""
+@cache_api_response()
+async def get_invoice(
+    invoice_id: int, 
+    current_user: User = Depends(get_current_active_user),
+    invoice_service: InvoiceService = Depends(get_invoice_service)
+):
+    """Get an invoice by ID (requires authentication)"""
     invoice = await invoice_service.get_invoice_by_id(invoice_id)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
@@ -89,9 +96,10 @@ async def get_invoice(invoice_id: int, invoice_service: InvoiceService = Depends
 @router.post("/", response_model=InvoiceResponseDTO)
 async def create_invoice(
     invoice: InvoiceCreateDTO,
+    current_user: User = Depends(get_current_active_user),
     invoice_service: InvoiceService = Depends(get_invoice_service)
 ):
-    """Create a new invoice"""
+    """Create a new invoice (requires authentication)"""
     result = await invoice_service.create_invoice(invoice)
     # Invalidate invoice and related caches
     invalidate_cache_pattern("api:get_invoices")

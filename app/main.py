@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     create_db_and_tables()
-    seed_data()
+    await seed_data()
     yield
     # Shutdown (if needed)
 
