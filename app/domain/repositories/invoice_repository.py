@@ -12,6 +12,11 @@ class InvoiceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_with_filters(self, filters: dict, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices with flexible filtering and pagination"""
+        pass
+
+    @abstractmethod
     async def get_by_id(self, invoice_id: int) -> Optional[Invoice]:
         """Get invoice by ID"""
         pass
@@ -29,19 +34,4 @@ class InvoiceRepositoryInterface(ABC):
     @abstractmethod
     async def delete(self, invoice_id: int) -> bool:
         """Delete an invoice"""
-        pass
-
-    @abstractmethod
-    async def get_by_student_id(self, student_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by student ID with pagination"""
-        pass
-
-    @abstractmethod
-    async def get_by_school_id(self, school_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by school ID with pagination"""
-        pass
-
-    @abstractmethod
-    async def get_by_status(self, status: str, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by status with pagination"""
         pass

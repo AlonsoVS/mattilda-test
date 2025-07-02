@@ -4,6 +4,28 @@ from datetime import date, datetime
 from app.domain.enums import InvoiceStatus, PaymentMethod
 
 
+class InvoiceFilterDTO(BaseModel):
+    """DTO for filtering invoices"""
+    invoice_number: Optional[str] = None
+    student_id: Optional[int] = None
+    school_id: Optional[int] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    tax_amount_min: Optional[float] = None
+    tax_amount_max: Optional[float] = None
+    total_amount_min: Optional[float] = None
+    total_amount_max: Optional[float] = None
+    description: Optional[str] = None
+    invoice_date_from: Optional[date] = None
+    invoice_date_to: Optional[date] = None
+    due_date_from: Optional[date] = None
+    due_date_to: Optional[date] = None
+    payment_date_from: Optional[date] = None
+    payment_date_to: Optional[date] = None
+    status: Optional[InvoiceStatus] = None
+    payment_method: Optional[PaymentMethod] = None
+
+
 class InvoiceCreateDTO(BaseModel):
     """DTO for creating an invoice"""
     invoice_number: str

@@ -3,7 +3,7 @@ from datetime import datetime
 from app.domain.models.invoice import Invoice
 from app.domain.enums import InvoiceStatus, PaymentMethod
 from app.domain.repositories.invoice_repository import InvoiceRepositoryInterface
-from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO
+from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO, InvoiceFilterDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
 
 
@@ -73,24 +73,6 @@ class InvoiceService:
         """Delete an invoice"""
         return await self.invoice_repository.delete(invoice_id)
 
-    async def get_invoices_by_student_id(self, student_id: int, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
-        """Get invoices by student ID with pagination"""
-        invoices, total = await self.invoice_repository.get_by_student_id(student_id, pagination.offset, pagination.limit)
-        invoice_dtos = [self._to_response_dto(invoice) for invoice in invoices]
-        return PaginatedResponse.create(invoice_dtos, total, pagination)
-
-    async def get_invoices_by_school_id(self, school_id: int, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
-        """Get invoices by school ID with pagination"""
-        invoices, total = await self.invoice_repository.get_by_school_id(school_id, pagination.offset, pagination.limit)
-        invoice_dtos = [self._to_response_dto(invoice) for invoice in invoices]
-        return PaginatedResponse.create(invoice_dtos, total, pagination)
-
-    async def get_invoices_by_status(self, status: str, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
-        """Get invoices by status with pagination"""
-        invoices, total = await self.invoice_repository.get_by_status(status, pagination.offset, pagination.limit)
-        invoice_dtos = [self._to_response_dto(invoice) for invoice in invoices]
-        return PaginatedResponse.create(invoice_dtos, total, pagination)
-
     async def record_payment(self, invoice_id: int, payment_data: PaymentRecordDTO) -> Optional[InvoiceResponseDTO]:
         """Record a payment for an invoice"""
         invoice = await self.invoice_repository.get_by_id(invoice_id)
@@ -112,6 +94,15 @@ class InvoiceService:
         updated_invoice = invoice.update(**update_data)
         updated_invoice = await self.invoice_repository.update(updated_invoice)
         return self._to_response_dto(updated_invoice)
+
+    async def get_invoices_with_filters(self, filters: InvoiceFilterDTO, pagination: PaginationParams) -> PaginatedResponse[InvoiceResponseDTO]:
+        """Get invoices with flexible filtering and pagination"""
+        # Convert DTO to dict, excluding None values
+        filter_dict = {k: v for k, v in filters.model_dump().items() if v is not None}
+        
+        invoices, total = await self.invoice_repository.get_with_filters(filter_dict, pagination.offset, pagination.limit)
+        invoice_dtos = [self._to_response_dto(invoice) for invoice in invoices]
+        return PaginatedResponse.create(invoice_dtos, total, pagination)
 
     def _to_response_dto(self, invoice: Invoice) -> InvoiceResponseDTO:
         """Convert domain model to response DTO"""

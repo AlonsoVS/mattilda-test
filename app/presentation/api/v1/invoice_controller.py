@@ -1,10 +1,12 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session
+from datetime import date
 from app.infrastructure.database.connection import get_session
 from app.infrastructure.repositories.invoice_repository import InvoiceRepository
 from app.application.services.invoice_service import InvoiceService
-from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO
+from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO, InvoiceFilterDTO
+from app.domain.enums import InvoiceStatus, PaymentMethod
 from app.core.pagination import PaginationParams, PaginatedResponse
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
@@ -20,11 +22,56 @@ def get_invoice_service(session: Session = Depends(get_session)) -> InvoiceServi
 async def get_invoices(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
+    invoice_number: Optional[str] = Query(None, description="Filter by invoice number (partial match)"),
+    student_id: Optional[int] = Query(None, description="Filter by student ID"),
+    school_id: Optional[int] = Query(None, description="Filter by school ID"),
+    amount_min: Optional[float] = Query(None, description="Filter by minimum amount"),
+    amount_max: Optional[float] = Query(None, description="Filter by maximum amount"),
+    tax_amount_min: Optional[float] = Query(None, description="Filter by minimum tax amount"),
+    tax_amount_max: Optional[float] = Query(None, description="Filter by maximum tax amount"),
+    total_amount_min: Optional[float] = Query(None, description="Filter by minimum total amount"),
+    total_amount_max: Optional[float] = Query(None, description="Filter by maximum total amount"),
+    description: Optional[str] = Query(None, description="Filter by description (partial match)"),
+    invoice_date_from: Optional[date] = Query(None, description="Filter by invoice date from"),
+    invoice_date_to: Optional[date] = Query(None, description="Filter by invoice date to"),
+    due_date_from: Optional[date] = Query(None, description="Filter by due date from"),
+    due_date_to: Optional[date] = Query(None, description="Filter by due date to"),
+    payment_date_from: Optional[date] = Query(None, description="Filter by payment date from"),
+    payment_date_to: Optional[date] = Query(None, description="Filter by payment date to"),
+    status: Optional[InvoiceStatus] = Query(None, description="Filter by invoice status"),
+    payment_method: Optional[PaymentMethod] = Query(None, description="Filter by payment method"),
     invoice_service: InvoiceService = Depends(get_invoice_service)
 ):
-    """Get all invoices with pagination"""
+    """Get invoices with optional filtering and pagination"""
     pagination = PaginationParams(page=page, size=size)
-    return await invoice_service.get_all_invoices(pagination)
+    
+    # Create filter DTO
+    filters = InvoiceFilterDTO(
+        invoice_number=invoice_number,
+        student_id=student_id,
+        school_id=school_id,
+        amount_min=amount_min,
+        amount_max=amount_max,
+        tax_amount_min=tax_amount_min,
+        tax_amount_max=tax_amount_max,
+        total_amount_min=total_amount_min,
+        total_amount_max=total_amount_max,
+        description=description,
+        invoice_date_from=invoice_date_from,
+        invoice_date_to=invoice_date_to,
+        due_date_from=due_date_from,
+        due_date_to=due_date_to,
+        payment_date_from=payment_date_from,
+        payment_date_to=payment_date_to,
+        status=status,
+        payment_method=payment_method
+    )
+    
+    # Check if any filters are applied
+    if any(v is not None for v in filters.model_dump().values()):
+        return await invoice_service.get_invoices_with_filters(filters, pagination)
+    else:
+        return await invoice_service.get_all_invoices(pagination)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponseDTO)
@@ -68,42 +115,6 @@ async def delete_invoice(
     if not success:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return {"message": "Invoice deleted successfully"}
-
-
-@router.get("/student/{student_id}", response_model=PaginatedResponse[InvoiceResponseDTO])
-async def get_invoices_by_student(
-    student_id: int,
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(10, ge=1, le=100, description="Items per page"),
-    invoice_service: InvoiceService = Depends(get_invoice_service)
-):
-    """Get invoices by student ID with pagination"""
-    pagination = PaginationParams(page=page, size=size)
-    return await invoice_service.get_invoices_by_student_id(student_id, pagination)
-
-
-@router.get("/school/{school_id}", response_model=PaginatedResponse[InvoiceResponseDTO])
-async def get_invoices_by_school(
-    school_id: int,
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(10, ge=1, le=100, description="Items per page"),
-    invoice_service: InvoiceService = Depends(get_invoice_service)
-):
-    """Get invoices by school ID with pagination"""
-    pagination = PaginationParams(page=page, size=size)
-    return await invoice_service.get_invoices_by_school_id(school_id, pagination)
-
-
-@router.get("/status/{status}", response_model=PaginatedResponse[InvoiceResponseDTO])
-async def get_invoices_by_status(
-    status: str,
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(10, ge=1, le=100, description="Items per page"),
-    invoice_service: InvoiceService = Depends(get_invoice_service)
-):
-    """Get invoices by status (pending, paid, overdue, cancelled) with pagination"""
-    pagination = PaginationParams(page=page, size=size)
-    return await invoice_service.get_invoices_by_status(status, pagination)
 
 
 @router.post("/{invoice_id}/payment", response_model=InvoiceResponseDTO)

@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from sqlmodel import Session, func, select
+from sqlmodel import Session, func, select, col
 from datetime import datetime
 from app.domain.models.invoice import Invoice
 from app.domain.repositories.invoice_repository import InvoiceRepositoryInterface
@@ -68,44 +68,83 @@ class InvoiceRepository(InvoiceRepositoryInterface):
             return True
         return False
 
-    async def get_by_student_id(self, student_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by student ID with pagination"""
+    async def get_with_filters(self, filters: dict, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
+        """Get invoices with flexible filtering and pagination"""
+        # Build the base query
+        statement = select(InvoiceEntity)
+        count_statement = select(func.count()).select_from(InvoiceEntity)
+        
+        # Apply filters
+        conditions = []
+        
+        if filters.get('invoice_number'):
+            conditions.append(col(InvoiceEntity.invoice_number).ilike(f"%{filters['invoice_number']}%"))
+        
+        if filters.get('student_id') is not None:
+            conditions.append(InvoiceEntity.student_id == filters['student_id'])
+        
+        if filters.get('school_id') is not None:
+            conditions.append(InvoiceEntity.school_id == filters['school_id'])
+        
+        # Amount range filters
+        if filters.get('amount_min') is not None:
+            conditions.append(InvoiceEntity.amount >= filters['amount_min'])
+        
+        if filters.get('amount_max') is not None:
+            conditions.append(InvoiceEntity.amount <= filters['amount_max'])
+        
+        if filters.get('tax_amount_min') is not None:
+            conditions.append(InvoiceEntity.tax_amount >= filters['tax_amount_min'])
+        
+        if filters.get('tax_amount_max') is not None:
+            conditions.append(InvoiceEntity.tax_amount <= filters['tax_amount_max'])
+        
+        if filters.get('total_amount_min') is not None:
+            conditions.append(InvoiceEntity.total_amount >= filters['total_amount_min'])
+        
+        if filters.get('total_amount_max') is not None:
+            conditions.append(InvoiceEntity.total_amount <= filters['total_amount_max'])
+        
+        if filters.get('description'):
+            conditions.append(col(InvoiceEntity.description).ilike(f"%{filters['description']}%"))
+        
+        # Date range filters
+        if filters.get('invoice_date_from'):
+            conditions.append(InvoiceEntity.invoice_date >= filters['invoice_date_from'])
+        
+        if filters.get('invoice_date_to'):
+            conditions.append(InvoiceEntity.invoice_date <= filters['invoice_date_to'])
+        
+        if filters.get('due_date_from'):
+            conditions.append(InvoiceEntity.due_date >= filters['due_date_from'])
+        
+        if filters.get('due_date_to'):
+            conditions.append(InvoiceEntity.due_date <= filters['due_date_to'])
+        
+        if filters.get('payment_date_from'):
+            conditions.append(InvoiceEntity.payment_date >= filters['payment_date_from'])
+        
+        if filters.get('payment_date_to'):
+            conditions.append(InvoiceEntity.payment_date <= filters['payment_date_to'])
+        
+        if filters.get('status'):
+            conditions.append(InvoiceEntity.status == filters['status'])
+        
+        if filters.get('payment_method'):
+            conditions.append(InvoiceEntity.payment_method == filters['payment_method'])
+        
+        # Apply conditions to both statements
+        if conditions:
+            from sqlmodel import and_
+            filter_condition = and_(*conditions)
+            statement = statement.where(filter_condition)
+            count_statement = count_statement.where(filter_condition)
+        
         # Get total count
-        count_statement = select(func.count()).select_from(InvoiceEntity).where(InvoiceEntity.student_id == student_id)
         total = self.session.exec(count_statement).one()
         
         # Get paginated results
-        statement = select(InvoiceEntity).where(InvoiceEntity.student_id == student_id).offset(offset).limit(limit)
-        result = self.session.exec(statement)
-        entities = list(result.all())
-        
-        # Convert to domain models
-        invoices = [InvoiceMapper.to_domain(entity) for entity in entities]
-        return invoices, total
-
-    async def get_by_school_id(self, school_id: int, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by school ID with pagination"""
-        # Get total count
-        count_statement = select(func.count()).select_from(InvoiceEntity).where(InvoiceEntity.school_id == school_id)
-        total = self.session.exec(count_statement).one()
-        
-        # Get paginated results
-        statement = select(InvoiceEntity).where(InvoiceEntity.school_id == school_id).offset(offset).limit(limit)
-        result = self.session.exec(statement)
-        entities = list(result.all())
-        
-        # Convert to domain models
-        invoices = [InvoiceMapper.to_domain(entity) for entity in entities]
-        return invoices, total
-
-    async def get_by_status(self, status: str, offset: int = 0, limit: int = 10) -> Tuple[List[Invoice], int]:
-        """Get invoices by status with pagination"""
-        # Get total count
-        count_statement = select(func.count()).select_from(InvoiceEntity).where(InvoiceEntity.status == status)
-        total = self.session.exec(count_statement).one()
-        
-        # Get paginated results
-        statement = select(InvoiceEntity).where(InvoiceEntity.status == status).offset(offset).limit(limit)
+        statement = statement.offset(offset).limit(limit)
         result = self.session.exec(statement)
         entities = list(result.all())
         
