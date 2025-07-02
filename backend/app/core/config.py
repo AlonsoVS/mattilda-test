@@ -39,7 +39,12 @@ class Settings:
     ADMIN_FULL_NAME: str = os.getenv("ADMIN_FULL_NAME", "Admin User")
     
     # CORS
-    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173")
+    
+    @property
+    def CORS_ORIGINS(self) -> list[str]:
+        """Convert ALLOWED_ORIGINS string to list"""
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
     
     # Server
     APP_HOST: str = os.getenv("APP_HOST", "127.0.0.1")
