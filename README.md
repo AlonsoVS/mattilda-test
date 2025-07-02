@@ -17,7 +17,7 @@ app/
 
 ## 🚀 Quick Start
 
-### Choose Your Development Environment
+### Choose Development Environment
 
 This project supports three different development environments:
 
@@ -49,7 +49,10 @@ make dev
 # Access the application
 # - API: http://localhost:8000
 # - Docs: http://localhost:8000/docs
-# - DB Admin: make pgadmin → http://localhost:5050
+# - pgAdmin: http://localhost:5050 (admin@mattilda.com / admin123)
+
+# Test with default admin user
+# Login at http://localhost:8000/docs with: admin / admin123
 ```
 
 #### 🚀 **Docker Production**
@@ -62,14 +65,6 @@ make dev
 
 # 2. Deploy
 make prod
-```
-
-### Environment Configuration Helper
-
-Use the interactive setup tool to choose and configure your environment:
-
-```bash
-python setup_env.py
 ```
 
 ## 📊 Features
@@ -175,6 +170,60 @@ pytest tests/unit/domain/test_school_model.py -v
 # Run with coverage
 python run_tests.py coverage
 ```
+
+### 🔐 Testing with Default Admin User
+
+The system automatically creates a default admin user for testing and development:
+
+#### Default Admin Credentials
+- **Username**: `admin`
+- **Password**: `admin123` (development), see env files for other environments
+- **Email**: `admin@example.com` (development)
+- **Role**: Superuser (access to all admin endpoints)
+
+#### Quick Admin Testing
+
+**1. Start the development environment:**
+```bash
+make dev
+```
+
+**2. Login and get access token:**
+```bash
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+     -H "Content-Type: application/json" \
+     -d '{"username": "admin", "password": "admin123"}'
+```
+
+**3. Test admin endpoints with the token:**
+```bash
+# Get current user info
+curl -X GET "http://localhost:8000/api/v1/auth/me" \
+     -H "Authorization: Bearer ACCESS_TOKEN"
+
+# List all users (admin only)
+curl -X GET "http://localhost:8000/api/v1/auth/users" \
+     -H "Authorization: Bearer ACCESS_TOKEN"
+
+# Cache management (admin only)
+curl -X GET "http://localhost:8000/api/v1/cache/stats" \
+     -H "Authorization: Bearer ACCESS_TOKEN"
+```
+
+#### Using Interactive API Documentation
+1. Open http://localhost:8000/docs
+2. Click **"Authorize"** button (top right)
+3. Login with `admin` / `admin123`
+4. Test any endpoint directly in the browser
+
+#### Available Admin Endpoints
+| Method | Endpoint | Description | Auth Level |
+|--------|----------|-------------|------------|
+| `GET` | `/api/v1/auth/users` | List all users | Superuser |
+| `GET` | `/api/v1/auth/users/{id}` | Get user by ID | Superuser |
+| `GET` | `/api/v1/cache/stats` | Cache statistics | Superuser |
+| `DELETE` | `/api/v1/cache/clear` | Clear all caches | Superuser |
+| `GET` | `/api/v1/cache/health` | Cache health check | Superuser |
 
 ## 🚀 Production Deployment
 
@@ -288,10 +337,17 @@ ALLOWED_ORIGINS=https://yourdomain.com
 #### Application
 - `ENVIRONMENT` - Environment mode (development/production)
 - `DEBUG` - Debug mode (true/false)
-- `SECRET_KEY` - JWT signing key (**CHANGE IN PRODUCTION!**)
+- `SECRET_KEY` - JWT signing key
+- `ACCESS_TOKEN_EXPIRE_MINUTES` - JWT token expiration in minutes
 - `ALLOWED_ORIGINS` - CORS allowed origins
 - `APP_HOST` - Application host (127.0.0.1 for local, 0.0.0.0 for Docker)
 - `APP_PORT` - Application port (default: 8000)
+
+#### Default Admin User
+- `ADMIN_USERNAME` - Default admin username (default: admin)
+- `ADMIN_EMAIL` - Default admin email
+- `ADMIN_PASSWORD` - Default admin password
+- `ADMIN_FULL_NAME` - Default admin display name
 
 ## 📋 Available Commands
 
@@ -355,7 +411,6 @@ mattilda-test/
 ├── tests/
 │   └── unit/domain/        # Domain model tests
 ├── docker/                 # Docker configuration
-├── backups/               # Database backups
 ├── Dockerfile             # Development container
 ├── Dockerfile.prod        # Production container
 ├── docker-compose.yml     # Development orchestration
