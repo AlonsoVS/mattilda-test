@@ -4,7 +4,7 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: mattilda-db
+    container_name: mattilda-db-dev
     environment:
       POSTGRES_DB: mattilda_db
       POSTGRES_USER: postgres
@@ -28,7 +28,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: mattilda-backend
+    container_name: mattilda-backend-dev
     ports:
       - "8000:8000"
     environment:
@@ -38,7 +38,7 @@ services:
       - DEBUG=true
       - DB_ECHO=true
       - ENVIRONMENT=development
-      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:5173
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:5173
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
@@ -54,7 +54,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: mattilda-frontend
+    container_name: mattilda-frontend-dev
     ports:
       - "5173:5173"
     environment:

@@ -156,3 +156,27 @@ backups/
 # Logs
 logs/
 *.log
+
+# Frontend specific
+# Node modules
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/coverage/
+frontend/.eslintcache
+
+# Backend specific
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/.pytest_cache/
+backend/htmlcov/
+backend/.coverage
+backend/.venv/
