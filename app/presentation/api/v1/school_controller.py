@@ -9,6 +9,7 @@ from app.infrastructure.repositories.invoice_repository import InvoiceRepository
 from app.application.services.school_service import SchoolService
 from app.application.dtos.school_dto import SchoolCreateDTO, SchoolUpdateDTO, SchoolResponseDTO, SchoolFilterDTO, SchoolAccountStatementDTO
 from app.core.pagination import PaginationParams, PaginatedResponse
+from app.core.cache import cache_api_response, cache_static_data, invalidate_cache_pattern
 
 router = APIRouter(prefix="/schools", tags=["schools"])
 
@@ -22,6 +23,7 @@ def get_school_service(session: Session = Depends(get_session)) -> SchoolService
 
 
 @router.get("/", response_model=PaginatedResponse[SchoolResponseDTO])
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_schools(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
@@ -60,6 +62,7 @@ async def get_schools(
 
 
 @router.get("/{school_id}", response_model=SchoolResponseDTO)
+@cache_static_data()  # Re-enabled with simple implementation
 async def get_school(school_id: int, school_service: SchoolService = Depends(get_school_service)):
     """Get a school by ID"""
     school = await school_service.get_school_by_id(school_id)
@@ -74,7 +77,11 @@ async def create_school(
     school_service: SchoolService = Depends(get_school_service)
 ):
     """Create a new school"""
-    return await school_service.create_school(school)
+    result = await school_service.create_school(school)
+    # Invalidate school-related caches
+    invalidate_cache_pattern("api:get_schools")
+    invalidate_cache_pattern("static:get_school")
+    return result
 
 
 @router.put("/{school_id}", response_model=SchoolResponseDTO)
@@ -87,6 +94,10 @@ async def update_school(
     school = await school_service.update_school(school_id, school_update)
     if not school:
         raise HTTPException(status_code=404, detail="School not found")
+    # Invalidate school-related caches
+    invalidate_cache_pattern("api:get_schools")
+    invalidate_cache_pattern(f"static:get_school:{school_id}")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return school
 
 
@@ -99,10 +110,15 @@ async def delete_school(
     success = await school_service.delete_school(school_id)
     if not success:
         raise HTTPException(status_code=404, detail="School not found")
+    # Invalidate school-related caches
+    invalidate_cache_pattern("api:get_schools")
+    invalidate_cache_pattern(f"static:get_school:{school_id}")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return {"message": "School deleted successfully"}
 
 
 @router.get("/{school_id}/account-statement", response_model=SchoolAccountStatementDTO)
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_school_account_statement(
     school_id: int,
     date_from: Optional[date] = Query(None, description="Statement period start date (defaults to beginning of current year)"),

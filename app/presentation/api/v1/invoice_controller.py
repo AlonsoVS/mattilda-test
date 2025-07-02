@@ -8,6 +8,7 @@ from app.application.services.invoice_service import InvoiceService
 from app.application.dtos.invoice_dto import InvoiceCreateDTO, InvoiceUpdateDTO, InvoiceResponseDTO, PaymentRecordDTO, InvoiceFilterDTO
 from app.domain.enums import InvoiceStatus, PaymentMethod
 from app.core.pagination import PaginationParams, PaginatedResponse
+from app.core.cache import cache_api_response, invalidate_cache_pattern
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -19,6 +20,7 @@ def get_invoice_service(session: Session = Depends(get_session)) -> InvoiceServi
 
 
 @router.get("/", response_model=PaginatedResponse[InvoiceResponseDTO])
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_invoices(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
@@ -75,6 +77,7 @@ async def get_invoices(
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponseDTO)
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_invoice(invoice_id: int, invoice_service: InvoiceService = Depends(get_invoice_service)):
     """Get an invoice by ID"""
     invoice = await invoice_service.get_invoice_by_id(invoice_id)
@@ -89,7 +92,12 @@ async def create_invoice(
     invoice_service: InvoiceService = Depends(get_invoice_service)
 ):
     """Create a new invoice"""
-    return await invoice_service.create_invoice(invoice)
+    result = await invoice_service.create_invoice(invoice)
+    # Invalidate invoice and related caches
+    invalidate_cache_pattern("api:get_invoices")
+    invalidate_cache_pattern("api:get_student_account_statement")
+    invalidate_cache_pattern("api:get_school_account_statement")
+    return result
 
 
 @router.put("/{invoice_id}", response_model=InvoiceResponseDTO)
@@ -102,6 +110,11 @@ async def update_invoice(
     invoice = await invoice_service.update_invoice(invoice_id, invoice_update)
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    # Invalidate invoice and related caches
+    invalidate_cache_pattern("api:get_invoices")
+    invalidate_cache_pattern(f"api:get_invoice:{invoice_id}")
+    invalidate_cache_pattern("api:get_student_account_statement")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return invoice
 
 
@@ -114,6 +127,11 @@ async def delete_invoice(
     success = await invoice_service.delete_invoice(invoice_id)
     if not success:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    # Invalidate invoice and related caches
+    invalidate_cache_pattern("api:get_invoices")
+    invalidate_cache_pattern(f"api:get_invoice:{invoice_id}")
+    invalidate_cache_pattern("api:get_student_account_statement")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return {"message": "Invoice deleted successfully"}
 
 
@@ -128,6 +146,11 @@ async def record_payment(
         invoice = await invoice_service.record_payment(invoice_id, payment)
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
+        # Invalidate invoice and related caches (payment changes financial data)
+        invalidate_cache_pattern("api:get_invoices")
+        invalidate_cache_pattern(f"api:get_invoice:{invoice_id}")
+        invalidate_cache_pattern("api:get_student_account_statement")
+        invalidate_cache_pattern("api:get_school_account_statement")
         return invoice
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

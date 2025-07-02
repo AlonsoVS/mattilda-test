@@ -9,6 +9,7 @@ help:
 	@echo "  make dev        - Start development environment (Docker)"
 	@echo "  make prod       - Start production environment (Docker)"
 	@echo "  make build      - Build Docker images"
+	@echo "  make rebuild    - Rebuild Docker images (no cache, for dependency changes)"
 	@echo "  make up         - Start services"
 	@echo "  make down       - Stop services"
 	@echo "  make restart    - Restart services"
@@ -39,6 +40,8 @@ dev:
 		echo "❌ .env.docker file not found. Please check the environment files."; \
 		exit 1; \
 	fi
+	@echo "🔨 Building Docker images (in case dependencies changed)..."
+	docker compose build
 	docker compose up -d
 	@echo "✅ Development environment is running!"
 	@echo "🌐 Backend API: http://localhost:8000"
@@ -59,6 +62,11 @@ prod:
 build:
 	@echo "🔨 Building Docker images..."
 	docker compose build
+
+# Build images without cache (useful when dependencies change)
+rebuild:
+	@echo "🔨 Rebuilding Docker images (no cache)..."
+	docker compose build --no-cache
 
 # Start services
 up:

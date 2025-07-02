@@ -41,3 +41,6 @@ websockets==15.0.1
 # Testing dependencies
 pytest==8.2.0
 pytest-asyncio==0.23.8
+
+# Caching dependencies
+cachetools==5.3.3

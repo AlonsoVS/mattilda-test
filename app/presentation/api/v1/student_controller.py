@@ -15,6 +15,7 @@ from app.application.dtos.student_dto import (
     StudentAccountStatementDTO
 )
 from app.core.pagination import PaginationParams, PaginatedResponse
+from app.core.cache import cache_api_response, cache_static_data, invalidate_cache_pattern
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -28,6 +29,7 @@ def get_student_service(session: Session = Depends(get_session)) -> StudentServi
 
 
 @router.get("/", response_model=PaginatedResponse[StudentResponseDTO])
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_students(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
@@ -68,6 +70,7 @@ async def get_students(
 
 
 @router.get("/{student_id}", response_model=StudentResponseDTO)
+@cache_static_data()  # Re-enabled with simple implementation
 async def get_student(student_id: int, student_service: StudentService = Depends(get_student_service)):
     """Get a student by ID"""
     student = await student_service.get_student_by_id(student_id)
@@ -82,7 +85,12 @@ async def create_student(
     student_service: StudentService = Depends(get_student_service)
 ):
     """Create a new student"""
-    return await student_service.create_student(student)
+    result = await student_service.create_student(student)
+    # Invalidate student and school-related caches
+    invalidate_cache_pattern("api:get_students")
+    invalidate_cache_pattern("static:get_student")
+    invalidate_cache_pattern("api:get_school_account_statement")
+    return result
 
 
 @router.put("/{student_id}", response_model=StudentResponseDTO)
@@ -95,6 +103,11 @@ async def update_student(
     student = await student_service.update_student(student_id, student_update)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+    # Invalidate student and related caches
+    invalidate_cache_pattern("api:get_students")
+    invalidate_cache_pattern(f"static:get_student:{student_id}")
+    invalidate_cache_pattern("api:get_student_account_statement")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return student
 
 
@@ -107,10 +120,16 @@ async def delete_student(
     success = await student_service.delete_student(student_id)
     if not success:
         raise HTTPException(status_code=404, detail="Student not found")
+    # Invalidate student and related caches
+    invalidate_cache_pattern("api:get_students")
+    invalidate_cache_pattern(f"static:get_student:{student_id}")
+    invalidate_cache_pattern("api:get_student_account_statement")
+    invalidate_cache_pattern("api:get_school_account_statement")
     return {"message": "Student deleted successfully"}
 
 
 @router.get("/{student_id}/account-statement", response_model=StudentAccountStatementDTO)
+@cache_api_response()  # Re-enabled with simple implementation
 async def get_student_account_statement(
     student_id: int,
     date_from: Optional[date] = Query(None, description="Statement period start date (defaults to beginning of current year)"),
